@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { DEMO } from './api.js'
 import Dashboard from './pages/Dashboard.jsx'
 import CheckIn from './pages/CheckIn.jsx'
 import Log from './pages/Log.jsx'
@@ -29,6 +30,12 @@ export default function App() {
           </a>
         ))}
       </nav>
+      {DEMO && (
+        <p className="demo-banner" role="note">
+          Demo: simulated crew data (crew-1 to crew-4) and cached NASA DONKI events. Read-only, no backend, nothing
+          you enter is saved.
+        </p>
+      )}
       <main>
         <Page />
       </main>

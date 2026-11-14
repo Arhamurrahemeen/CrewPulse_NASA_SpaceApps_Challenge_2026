@@ -1,7 +1,10 @@
 export const API = 'http://localhost:8000'
 export { indicators as INDICATORS, environment as ENVIRONMENT } from '../../backend/rules/thresholds.json'
 
+export const DEMO = import.meta.env.VITE_DEMO_MODE === 'true'
+
 export async function api(path, options) {
+  if (DEMO) return (await import('./demo.js')).demoApi(path, options)
   let res
   try {
     res = await fetch(API + path, options)

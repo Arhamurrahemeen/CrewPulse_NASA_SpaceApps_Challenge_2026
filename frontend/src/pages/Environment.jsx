@@ -77,7 +77,7 @@ export default function Environment() {
       <p className="muted">
         CO₂ limit is a 1-hour average; one reading above it is a prompt to re-check, not proof the average is exceeded.
       </p>
-      <div className="grid">{data?.latest.map((x) => <StatusCard key={x.indicator} {...x} source="manual" />)}</div>
+      <div className="grid">{data?.latest.map((x) => <StatusCard key={x.indicator} source="manual" {...x} />)}</div>
 
       <h2>Trends</h2>
       <div className="toggle-group" role="group" aria-label="Time range">

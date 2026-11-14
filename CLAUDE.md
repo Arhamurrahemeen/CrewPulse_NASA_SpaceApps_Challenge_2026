@@ -84,6 +84,7 @@ tools/validate.py      camera vs oximeter pairs → MAE, bias, Bland–Altman PN
 - Frontend: `cd frontend && npm install && npm run dev`
 - Tests: `cd backend && pytest -q`
 - Simulated data: `python -m sim.generate --crew 4 --days 90 --seed 42`
+- Demo build (public link, no backend): `cd backend && python -m donki.client && python -m sim.export_demo` (writes `frontend/src/demo/data.json`), then `cd frontend && npm run build:demo` → static site in `frontend/dist-demo/` (relative paths, host anywhere). Preview: `npx vite preview --outDir dist-demo`
 
 ## Definition of done (per feature)
 Works with Wi-Fi off · has a test or a manual check note · no console errors · every number on screen shows its unit and, for thresholds, its source.

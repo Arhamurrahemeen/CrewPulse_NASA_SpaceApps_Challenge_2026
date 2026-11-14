@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '../api.js'
+import { api, DEMO } from '../api.js'
 import StatusCard from '../components/StatusCard.jsx'
 import StressHrvCard from '../components/StressHrvCard.jsx'
 import TrendChart from '../components/TrendChart.jsx'
@@ -59,7 +59,7 @@ function Trends({ crew, reload }) {
 }
 
 export default function Dashboard() {
-  const [crew, setCrew] = useState('c1')
+  const [crew, setCrew] = useState(DEMO ? 'crew-1' : 'c1')
   const [items, setItems] = useState(null)
   const [error, setError] = useState(null)
   const [loaded, setLoaded] = useState({ crew: null, n: 0 })
@@ -80,8 +80,9 @@ export default function Dashboard() {
       <h1>Dashboard</h1>
       <p className="muted">Latest reading per indicator. Monitoring and decision support only.</p>
       <label>
-        Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} />
+        Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} list="crew-ids" />
       </label>{' '}
+      {DEMO && <datalist id="crew-ids">{['crew-1', 'crew-2', 'crew-3', 'crew-4'].map((c) => <option key={c} value={c} />)}</datalist>}
       <button onClick={load}>Refresh</button>
       {error && <div className="card warn">{error}</div>}
       {items?.length === 0 && <p>No readings yet. Log some on the Log page or run a check-in.</p>}
