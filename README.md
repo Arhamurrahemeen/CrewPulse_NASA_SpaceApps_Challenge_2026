@@ -13,8 +13,11 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+curl -L -o rppg/models/face_landmarker.task --create-dirs "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 uvicorn main:app --reload
 ```
+
+The face model (~3.7 MB) is gitignored; the camera check-in needs it.
 
 Frontend (localhost:5173):
 

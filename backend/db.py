@@ -43,8 +43,8 @@ CREATE TABLE IF NOT EXISTS radiation_event (
 """
 
 
-def connect(path=DB_PATH):
-    conn = sqlite3.connect(path)
+def connect(path=None):
+    conn = sqlite3.connect(path or DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     return conn

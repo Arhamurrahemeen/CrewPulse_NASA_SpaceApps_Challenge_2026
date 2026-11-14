@@ -1,8 +1,8 @@
 fastapi
 uvicorn[standard]
-httpx
-numpy
-scipy
-opencv-python
-mediapipe
+httpx==0.28.1
+numpy==2.4.4
+scipy==1.17.1
+opencv-python==4.13.0.92
+mediapipe==0.10.32
 pytest
