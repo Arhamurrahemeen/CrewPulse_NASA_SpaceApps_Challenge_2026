@@ -26,9 +26,9 @@ def test_daily_means_average_within_a_day():
 
 
 def test_not_ready_until_min_days():
-    b = baseline(series(noisy(MIN_DAYS)))  # MIN_DAYS days total = MIN_DAYS - 1 of history
+    b = baseline(series(noisy(MIN_DAYS + 1)))  # today and yesterday are not history
     assert not b["ready"] and b["n_days"] == MIN_DAYS - 1 and not b["unusual"] and b["z"] is None
-    assert baseline(series(noisy(MIN_DAYS + 1)))["ready"]
+    assert baseline(series(noisy(MIN_DAYS + 2)))["ready"]
 
 
 def test_stable_is_not_unusual():
@@ -36,14 +36,28 @@ def test_stable_is_not_unusual():
     assert b["ready"] and abs(b["z"]) < 2 and not b["unusual"] and not b["trend"]
 
 
-def test_jump_is_unusual_both_directions():
-    assert baseline(series(noisy(21) + [70]))["unusual"]
-    assert baseline(series(noisy(21) + [50]))["unusual"]
+def test_two_consecutive_days_needed():
+    assert baseline(series(noisy(21) + [70, 70]))["unusual"]
+    assert baseline(series(noisy(21) + [50, 50]))["unusual"]
+    one = baseline(series(noisy(21) + [60, 70]))  # only today is out
+    assert one["z"] > 2 and abs(one["z_prev"]) < 2 and not one["unusual"]
 
 
-def test_latest_day_excluded_from_its_own_baseline():
+def test_opposite_directions_not_unusual():
+    b = baseline(series(noisy(21) + [50, 70]))
+    assert b["z_prev"] < -2 and b["z"] > 2 and not b["unusual"]
+
+
+def test_gap_yesterday_not_unusual():
+    hist = series(noisy(21))
+    today = (DAY0 + timedelta(days=22)).isoformat()  # day 21 (yesterday) missing
+    b = baseline(hist[:-1] + [(hist[-1][0], 70), (today, 70)])
+    assert b["z_prev"] is None and not b["unusual"]
+
+
+def test_judged_days_excluded_from_baseline():
     hist = noisy(21)
-    b = baseline(series(hist + [90]))
+    b = baseline(series(hist + [90, 90]))
     assert b["mean"] == pytest.approx(np.mean(hist), abs=0.01)
     assert b["sd"] == pytest.approx(np.std(hist, ddof=1), abs=0.01)
 
@@ -68,7 +82,7 @@ def test_flat_history_has_no_z():
 def test_status_includes_baseline(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.db")
     conn = db.connect()
-    rows = [("c1", ts, "heart_rate", v, "bpm", "manual") for ts, v in series(noisy(21) + [75])]
+    rows = [("c1", ts, "heart_rate", v, "bpm", "manual") for ts, v in series(noisy(21) + [75, 75])]
     with conn:
         conn.executemany("INSERT INTO reading (crew_id, ts, indicator, value, unit, source) VALUES (?, ?, ?, ?, ?, ?)", rows)
     conn.close()

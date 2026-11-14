@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import StatusCard from '../components/StatusCard.jsx'
 import StressHrvCard from '../components/StressHrvCard.jsx'
+import TrendChart from '../components/TrendChart.jsx'
 
 const RANK = { red: 3, amber: 2, green: 1 }
 
@@ -24,13 +25,48 @@ function mergeStressHrv(items) {
   return [...rest.slice(0, at), { indicator: 'stress_hrv', parts }, ...rest.slice(at)]
 }
 
+const RANGES = [7, 30, 90]
+
+// One chart per indicator with readings in the chosen window. `reload` changes on every Refresh.
+function Trends({ crew, reload }) {
+  const [days, setDays] = useState(30)
+  const [series, setSeries] = useState(null)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!crew) return
+    setError(null)
+    api(`/trends/${encodeURIComponent(crew)}?days=${days}`)
+      .then((d) => setSeries(d.indicators))
+      .catch((e) => setError(e.message))
+  }, [crew, days, reload])
+
+  return (
+    <section className="trends">
+      <h2>Trends</h2>
+      <div className="toggle-group" role="group" aria-label="Time range">
+        {RANGES.map((d) => (
+          <button key={d} aria-pressed={d === days} onClick={() => setDays(d)}>
+            {d} days
+          </button>
+        ))}
+      </div>
+      {error && <div className="card warn">{error}</div>}
+      {series?.length === 0 && <p className="muted">No readings in the last {days} days.</p>}
+      <div className="trend-grid">{series?.map((s) => <TrendChart key={s.indicator} series={s} days={days} />)}</div>
+    </section>
+  )
+}
+
 export default function Dashboard() {
   const [crew, setCrew] = useState('c1')
   const [items, setItems] = useState(null)
   const [error, setError] = useState(null)
+  const [loaded, setLoaded] = useState({ crew: null, n: 0 })
 
   async function load() {
     setError(null)
+    setLoaded((l) => ({ crew, n: l.n + 1 }))
     try {
       setItems(mergeStressHrv(mergeBp(await api(`/status/${encodeURIComponent(crew)}`))))
     } catch (e) {
@@ -50,6 +86,7 @@ export default function Dashboard() {
       {error && <div className="card warn">{error}</div>}
       {items?.length === 0 && <p>No readings yet. Log some on the Log page or run a check-in.</p>}
       <div className="grid">{items?.map((x) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} /> : <StatusCard key={x.indicator} {...x} />))}</div>
+      <Trends crew={loaded.crew} reload={loaded.n} />
     </section>
   )
 }

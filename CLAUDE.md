@@ -12,7 +12,7 @@ An **offline-first** dashboard that lets an astronaut assess their own health:
    Stress and HRV are shown side by side with no combined score (mentor requirement; no validated HRV→stress method).
    Inputs: manual entry (keyboard/buttons), camera check-in (rPPG heart rate), oximeter value typed in.
 2. Colour-code each reading green / amber / red against **cited** thresholds.
-3. Flag **unusual changes vs the astronaut's own baseline** (rolling mean ± 2 SD, 7-day trend slope).
+3. Flag **unusual changes vs the astronaut's own baseline** (rolling mean ± 2 SD on **2 consecutive days**, same direction; 7-day trend slope).
 4. Show trends over days/weeks (simulated 90-day crew history + real entries).
 5. Give plain-English guidance + when to "contact flight surgeons". Decision support, never diagnosis.
 6. Radiation panel from NASA DONKI space-weather events (cached for offline use).

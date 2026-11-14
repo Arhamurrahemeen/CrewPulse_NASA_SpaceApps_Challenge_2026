@@ -53,3 +53,12 @@ main { padding: 1rem; }
 .baseline { font-size: 0.85rem; margin: 0.4rem 0; }
 .unusual { color: var(--amber); font-weight: 600; margin: 0.3rem 0; }
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem; }
+.trends { margin-top: 2rem; }
+.toggle-group { display: inline-flex; gap: 0.25rem; margin-bottom: 0.75rem; }
+.toggle-group button { padding: 0.35rem 0.8rem; cursor: pointer; }
+.toggle-group button[aria-pressed='true'] { background: var(--accent); color: #0f1419; font-weight: 700; }
+.trend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); gap: 1rem; }
+.trend { margin: 0; border: 1px solid #2a3139; border-radius: 8px; padding: 0.75rem; }
+.trend figcaption { margin-bottom: 0.4rem; }
+.chart-note { font-size: 0.8rem; margin-top: 0.3rem; }
+.chart-tip { background: #1b2229; border: 1px solid #2a3139; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.85rem; }

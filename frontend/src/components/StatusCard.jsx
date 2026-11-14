@@ -13,9 +13,10 @@ export function Baseline({ b, unit }) {
       <div className="muted">
         Your {b.window_days}-day baseline: {b.mean} ± {b.sd} {unit}
         {b.z != null && <> · today z = {fmt(b.z)}</>}
+        {b.z_prev != null && <>, yesterday z = {fmt(b.z_prev)}</>}
         {b.slope_per_day != null && <> · 7-day trend {fmt(b.slope_per_day)} {unit}/day</>}
       </div>
-      {b.unusual && <p className="unusual">Unusual change vs your baseline. Consider a re-check.</p>}
+      {b.unusual && <p className="unusual">Unusual vs your baseline two days in a row. Consider a re-check.</p>}
       {b.trend && <p className="unusual">Steady {b.slope_per_day > 0 ? 'rise' : 'fall'} over the last 7 days. Keep monitoring.</p>}
     </div>
   )

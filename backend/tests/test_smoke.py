@@ -17,5 +17,5 @@ def test_schema():
 
 def test_stub_routes():
     c = TestClient(app)
-    assert c.get("/trends/c1", params={"indicator": "heart_rate"}).status_code == 501
+    assert c.get("/environment").status_code == 501
     assert c.get("/radiation").status_code == 501

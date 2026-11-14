@@ -34,3 +34,15 @@ def evaluate(indicator, value):
             }
     return {"status": None, "band": "No cited threshold yet", "guidance": None,
             "escalate_to_flight_surgeon": False, "source_title": None, "source_url": None}
+
+
+def bands(indicator):
+    """Cited bands as [{from, to, status}] ranges for charts; open ends stop at the plausible input limits."""
+    spec = INDICATORS[indicator]
+    lo, hi = spec["limits"]
+    out, start = [], lo
+    for band in spec.get("bands", []):
+        end = band.get("below", hi)
+        out.append({"from": start, "to": end, "status": band["status"], "label": band["label"]})
+        start = end
+    return out

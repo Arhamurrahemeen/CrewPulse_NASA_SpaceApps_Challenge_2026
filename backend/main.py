@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
@@ -158,8 +158,29 @@ def status(crew_id: str):
 
 
 @app.get("/trends/{crew_id}")
-def trends(crew_id: str, indicator: str, days: int = 30):
-    todo()
+def trends(crew_id: str, indicator: str | None = None, days: int = Query(30, ge=1, le=365)):
+    """Readings of the last `days` days (all indicators, or one) with unit, cited bands and source for charting."""
+    if indicator is not None and indicator not in engine.INDICATORS:
+        raise HTTPException(404, f"unknown indicator {indicator!r}")
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    conn = db.connect()
+    rows = conn.execute(
+        "SELECT indicator, ts, value, source FROM reading WHERE crew_id = ? AND ts >= ?"
+        + (" AND indicator = ?" if indicator else "") + " ORDER BY ts, id",
+        (crew_id, since, indicator) if indicator else (crew_id, since),
+    ).fetchall()
+    conn.close()
+    points = {}
+    for r in rows:
+        points.setdefault(r["indicator"], []).append({"ts": r["ts"], "value": r["value"], "source": r["source"]})
+    return {
+        "days": days,
+        "indicators": [
+            {"indicator": ind, "label": spec["label"], "unit": spec["unit"], "bands": engine.bands(ind),
+             "source_title": spec.get("source_title"), "source_url": spec.get("source_url"), "points": points[ind]}
+            for ind, spec in engine.INDICATORS.items() if ind in points
+        ],
+    }
 
 
 @app.post("/environment")
