@@ -16,7 +16,7 @@ An **offline-first** dashboard that lets an astronaut assess their own health:
 4. Show trends over days/weeks (simulated 90-day crew history + real entries).
 5. Give plain-English guidance + when to "contact flight surgeons". Decision support, never diagnosis.
 6. Radiation panel from NASA DONKI space-weather events (cached for offline use).
-7. Environment log (CO₂ ppm, cabin °C, humidity %) recorded alongside health data.
+7. Environment log (CO₂ ppCO₂ mmHg — ppm accepted and converted — cabin °C, humidity %) recorded alongside health data.
 Stretch, in this order: interactive body map (tap part → log symptom), reminders, streak/gamification, multi-crew view.
 
 ## How to work with the user
@@ -71,7 +71,7 @@ tools/validate.py      camera vs oximeter pairs → MAE, bias, Bland–Altman PN
 ## Data model (SQLite)
 - `reading(id, crew_id, ts, indicator, value, unit, source, quality)` — source ∈ camera|manual|oximeter|simulated
 - `symptom(id, crew_id, ts, body_part, severity_1_5, note)`
-- `environment(id, ts, co2_ppm, temp_c, humidity_pct)`
+- `environment(id, ts, co2_mmhg, temp_c, humidity_pct)` — CO₂ as partial pressure (mmHg), the unit of the NASA limit; the page converts ppm at an assumed 1 atm cabin
 - `radiation_event(id, ts, type, details_json, source)` — source = donki
 
 ## API (keep it small)
@@ -96,6 +96,7 @@ Works with Wi-Fi off · has a test or a manual check note · no console errors �
 - Bone loss ranges: Gabel et al. 2022 — https://doi.org/10.1038/s41598-022-13461-1
 - Behavioural health: NASA OCHMO TB-016 — https://www.nasa.gov/ochmo/health-operations-and-oversight/hsa-standards/
 - Spaceflight limits (SpO₂, temp, CO₂): NASA-STD-3001 — https://www.nasa.gov/reference/nasa-std-3001v1/  (values TODO — look up, don't guess)
+- Cabin CO₂ ≤ 3 mmHg (1-hour average): NASA-STD-3001 Vol 2 Rev F [V2 6004]; cabin 18–27 °C / 25–75 % RH health limits [V2 6012] (Figure 6.2-2 corners) and 20–25 °C / 30–60 % RH performance zone [V2 6013] — https://www.nasa.gov/reference/nasa-std-3001v2/
 - Radiation events: NASA CCMC DONKI — https://ccmc.gsfc.nasa.gov/tools/DONKI/ (API: https://ccmc.gsfc.nasa.gov/DONKI-API/get/<TYPE>; kauai.ccmc… did not connect on 2026-11-14)
 - Estimated ISS dose 80 mSv (solar max) – 160 mSv (solar min) per 6 months: NASA, Space Faring: The Radiation Challenge — https://www.nasa.gov/wp-content/uploads/2017/04/radiationchallenge.pdf
 - Career dose limit 600 mSv: NASA-STD-3001 Vol 1 Rev C, [V1 4030]

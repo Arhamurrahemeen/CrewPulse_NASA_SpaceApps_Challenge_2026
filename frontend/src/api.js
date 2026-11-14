@@ -1,5 +1,5 @@
 export const API = 'http://localhost:8000'
-export { indicators as INDICATORS } from '../../backend/rules/thresholds.json'
+export { indicators as INDICATORS, environment as ENVIRONMENT } from '../../backend/rules/thresholds.json'
 
 export async function api(path, options) {
   let res

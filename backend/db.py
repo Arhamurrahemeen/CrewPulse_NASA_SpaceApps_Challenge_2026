@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS symptom (
 CREATE TABLE IF NOT EXISTS environment (
     id INTEGER PRIMARY KEY,
     ts TEXT NOT NULL,
-    co2_ppm REAL,
+    co2_mmhg REAL,  -- ppCO2: NASA-STD-3001 [V2 6004] limits partial pressure, not ppm
     temp_c REAL,
     humidity_pct REAL
 );
@@ -47,4 +47,9 @@ def connect(path=None):
     conn = sqlite3.connect(path or DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(environment)")}
+    if "co2_ppm" in cols:  # pre-2026-11-14 schema, never written to (the routes were 501 stubs)
+        if conn.execute("SELECT 1 FROM environment LIMIT 1").fetchone():
+            raise RuntimeError("environment.co2_ppm has rows; convert them to mmHg before upgrading")
+        conn.execute("ALTER TABLE environment RENAME COLUMN co2_ppm TO co2_mmhg")
     return conn

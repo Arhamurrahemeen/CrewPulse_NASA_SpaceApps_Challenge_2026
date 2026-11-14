@@ -3,12 +3,15 @@
 import json
 from pathlib import Path
 
-INDICATORS = json.loads((Path(__file__).parent / "thresholds.json").read_text(encoding="utf-8"))["indicators"]
+_T = json.loads((Path(__file__).parent / "thresholds.json").read_text(encoding="utf-8"))
+INDICATORS = _T["indicators"]  # crew health readings
+ENVIRONMENT = _T["environment"]  # cabin CO2 / temperature / humidity
+SPECS = {**INDICATORS, **ENVIRONMENT}
 
 
-def check_value(indicator, value):
+def check_value(indicator, value, table=INDICATORS):
     """Raise ValueError if the value is outside the physically plausible input range."""
-    spec = INDICATORS.get(indicator)
+    spec = table.get(indicator)
     if spec is None:
         raise ValueError(f"unknown indicator {indicator!r}")
     lo, hi = spec["limits"]
@@ -21,7 +24,7 @@ def check_value(indicator, value):
 def evaluate(indicator, value):
     """-> {status, band, guidance, escalate_to_flight_surgeon, source_title, source_url}.
     status is None when the indicator has no cited threshold (value: null + todo)."""
-    spec = INDICATORS[indicator]
+    spec = SPECS[indicator]
     for band in spec.get("bands", []):
         if "below" not in band or value < band["below"]:
             return {
@@ -38,7 +41,7 @@ def evaluate(indicator, value):
 
 def bands(indicator):
     """Cited bands as [{from, to, status}] ranges for charts; open ends stop at the plausible input limits."""
-    spec = INDICATORS[indicator]
+    spec = SPECS[indicator]
     lo, hi = spec["limits"]
     out, start = [], lo
     for band in spec.get("bands", []):

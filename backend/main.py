@@ -185,14 +185,61 @@ def trends(crew_id: str, indicator: str | None = None, days: int = Query(30, ge=
     }
 
 
+class EnvironmentIn(BaseModel):
+    co2_mmhg: float | None = None
+    temp_c: float | None = None
+    humidity_pct: float | None = None
+
+
+def env_series(rows):
+    """Environment rows -> the /trends series shape, so TrendChart draws them with their cited bands."""
+    out = []
+    for ind, spec in engine.ENVIRONMENT.items():
+        points = [{"ts": r["ts"], "value": r[ind], "source": "manual"} for r in rows if r[ind] is not None]
+        if points:
+            out.append({"indicator": ind, "label": spec["label"], "unit": spec["unit"], "bands": engine.bands(ind),
+                        "source_title": spec["source_title"], "source_url": spec["source_url"], "points": points})
+    return out
+
+
 @app.post("/environment")
-def add_environment():
-    todo()
+def add_environment(body: EnvironmentIn):
+    """One cabin log entry. Values are rounded to the resolution the cited bands use."""
+    values = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not values:
+        raise HTTPException(422, ["Enter at least one value."])
+    spec = engine.ENVIRONMENT
+    values = {k: round(v) if spec[k].get("integer") else round(v, spec[k].get("decimals", 1)) for k, v in values.items()}
+    errors = []
+    for k, v in values.items():
+        try:
+            engine.check_value(k, v, spec)
+        except ValueError as e:
+            errors.append(str(e))
+    if errors:
+        raise HTTPException(422, errors)
+    ts = now()
+    conn = db.connect()
+    with conn:
+        conn.execute("INSERT INTO environment (ts, co2_mmhg, temp_c, humidity_pct) VALUES (?, ?, ?, ?)",
+                     (ts, values.get("co2_mmhg"), values.get("temp_c"), values.get("humidity_pct")))
+    conn.close()
+    return {"ts": ts, "values": values}
 
 
 @app.get("/environment")
-def list_environment():
-    todo()
+def list_environment(days: int = Query(30, ge=1, le=365)):
+    """Latest value per parameter (with status and cited guidance) and the series of the last `days` days."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    conn = db.connect()
+    rows = conn.execute("SELECT * FROM environment WHERE ts >= ? ORDER BY ts, id", (since,)).fetchall()
+    last = {ind: conn.execute(f"SELECT ts, {ind} AS v FROM environment WHERE {ind} IS NOT NULL ORDER BY ts DESC, id DESC LIMIT 1").fetchone()
+            for ind in engine.ENVIRONMENT}  # ind comes from thresholds.json keys, not user input
+    conn.close()
+    latest = [{"indicator": ind, "label": spec["label"], "unit": spec["unit"], "value": last[ind]["v"], "ts": last[ind]["ts"],
+               **engine.evaluate(ind, last[ind]["v"])}
+              for ind, spec in engine.ENVIRONMENT.items() if last[ind]]
+    return {"days": days, "latest": latest, "series": env_series(rows)}
 
 
 @app.post("/symptoms")

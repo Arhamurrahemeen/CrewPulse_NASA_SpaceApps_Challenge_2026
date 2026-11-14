@@ -1,7 +1,7 @@
 import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import SimulatedBadge from './SimulatedBadge.jsx'
 import SourceLink from './SourceLink.jsx'
-import { INDICATORS } from '../api.js'
+import { ENVIRONMENT, INDICATORS } from '../api.js'
 
 // Same colours as the CSS tokens (SVG attributes get literal values).
 const BAND_FILL = { green: '#3fb950', amber: '#d29922', red: '#f85149' }
@@ -40,7 +40,7 @@ export default function TrendChart({ series, days }) {
   const hi = Math.max(...values)
   const pad = Math.max((hi - lo) * 0.2, Math.abs(hi) * 0.05, 1)
   // Axis never shows physically impossible values (e.g. SpO₂ above 100 %).
-  const [minOk, maxOk] = INDICATORS[series.indicator].limits
+  const [minOk, maxOk] = (INDICATORS[series.indicator] ?? ENVIRONMENT[series.indicator]).limits
   const yDomain = [Math.max(minOk, Math.floor(lo - pad)), Math.min(maxOk, Math.ceil(hi + pad))]
   const hasSim = data.some((d) => d.source === 'simulated')
 

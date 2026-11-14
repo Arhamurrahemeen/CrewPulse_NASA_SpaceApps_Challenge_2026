@@ -113,5 +113,55 @@
       "value": null,
       "todo": "look up in NASA OCHMO TB-016 (Rev B checked: no mood-score threshold)"
     }
+  },
+  "environment": {
+    "co2_mmhg": {
+      "label": "Cabin CO₂ (ppCO₂)", "unit": "mmHg", "limits": [0, 30], "decimals": 1,
+      "source_title": "NASA-STD-3001 Vol 2 Rev F, [V2 6004] Nominal Vehicle/Habitat Carbon Dioxide Levels",
+      "source_url": "https://www.nasa.gov/reference/nasa-std-3001v2/",
+      "bands": [
+        {"below": 3.1, "status": "green", "label": "At or below 3 mmHg", "escalate_to_flight_surgeon": false,
+         "guidance": "Within NASA's limit (average over 1 hour no more than 3 mmHg)."},
+        {"status": "amber", "label": "Above 3 mmHg", "escalate_to_flight_surgeon": false,
+         "guidance": "Above the 3 mmHg one-hour average limit. Check CO₂ scrubbing and ventilation and re-check within the hour. If anyone has headaches, contact flight surgeons."}
+      ],
+      "todo": "red band: NASA-STD-3001 gives one limit (3 mmHg); TB-004 symptom levels (2.8-4.5 mmHg) are anecdotal, not a limit"
+    },
+    "temp_c": {
+      "label": "Cabin temperature", "unit": "°C", "limits": [0, 50], "decimals": 1,
+      "source_title": "NASA-STD-3001 Vol 2 Rev F, [V2 6012] Crew Health Environmental Limits and [V2 6013] Crew Performance Environmental Zone",
+      "source_url": "https://www.nasa.gov/reference/nasa-std-3001v2/",
+      "bands": [
+        {"below": 18, "status": "red", "label": "Below 18 °C crew health limit", "escalate_to_flight_surgeon": false,
+         "guidance": "Outside NASA crew health limits. Check cabin temperature control and report it to the ground team."},
+        {"below": 20, "status": "amber", "label": "18-20 °C, below performance zone", "escalate_to_flight_surgeon": false,
+         "guidance": "Inside health limits but colder than the 20-25 °C performance zone. Consider adjusting the set point or clothing."},
+        {"below": 25.1, "status": "green", "label": "20-25 °C performance zone", "escalate_to_flight_surgeon": false,
+         "guidance": "Within NASA's crew performance zone."},
+        {"below": 27.1, "status": "amber", "label": "25-27 °C, above performance zone", "escalate_to_flight_surgeon": false,
+         "guidance": "Inside health limits but warmer than the 20-25 °C performance zone. Consider adjusting the set point or air flow."},
+        {"status": "red", "label": "Above 27 °C crew health limit", "escalate_to_flight_surgeon": false,
+         "guidance": "Outside NASA crew health limits. Check cabin temperature control and report it to the ground team. Contact flight surgeons if anyone feels unwell."}
+      ],
+      "todo": "[V2 6012] is a 2-D temperature x humidity envelope (Figure 6.2-2, corners 18 °C/75 % and 27 °C/25 %); checked here per axis, so combined edge cases are approximate"
+    },
+    "humidity_pct": {
+      "label": "Cabin relative humidity", "unit": "%", "limits": [0, 100], "integer": true,
+      "source_title": "NASA-STD-3001 Vol 2 Rev F, [V2 6012] Crew Health Environmental Limits and [V2 6013] Crew Performance Environmental Zone",
+      "source_url": "https://www.nasa.gov/reference/nasa-std-3001v2/",
+      "bands": [
+        {"below": 25, "status": "red", "label": "Below 25 % crew health limit", "escalate_to_flight_surgeon": false,
+         "guidance": "Too dry (outside NASA crew health limits; dry mucous membranes, static build-up). Drink extra water and report it to the ground team."},
+        {"below": 30, "status": "amber", "label": "25-30 %, below performance zone", "escalate_to_flight_surgeon": false,
+         "guidance": "Inside health limits but drier than the 30-60 % performance zone. Keep monitoring."},
+        {"below": 61, "status": "green", "label": "30-60 % performance zone", "escalate_to_flight_surgeon": false,
+         "guidance": "Within NASA's crew performance zone."},
+        {"below": 76, "status": "amber", "label": "61-75 %, above performance zone", "escalate_to_flight_surgeon": false,
+         "guidance": "Inside health limits but more humid than the 30-60 % performance zone. Keep monitoring."},
+        {"status": "red", "label": "Above 75 % crew health limit", "escalate_to_flight_surgeon": false,
+         "guidance": "Too humid (outside NASA crew health limits; skin rashes from microbial growth). Check humidity control and report it to the ground team."}
+      ],
+      "todo": "see temp_c: per-axis reading of the 2-D Figure 6.2-2 envelope"
+    }
   }
 }
