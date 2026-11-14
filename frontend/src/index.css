@@ -1,0 +1,17 @@
+:root {
+  --bg: #0f1419;
+  --fg: #e6e8eb;
+  --muted: #9aa4ae;
+  --accent: #5fb3f9;
+  --green: #3fb950;
+  --amber: #d29922;
+  --red: #f85149;
+  font-family: system-ui, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+body { margin: 0; }
+nav { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid #2a3139; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a[aria-current='page'] { color: var(--accent); }
+main { padding: 1rem; }
