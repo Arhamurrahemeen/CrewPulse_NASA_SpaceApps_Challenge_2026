@@ -39,6 +39,20 @@ def cabin_rows(now, rng):
     return rows
 
 
+# Illustrative body-map entries for the demo (ASSUMPTION: not frequency data): (crew, days ago, part, severity, note)
+DEMO_SYMPTOMS = [
+    ("crew-1", 9, "lower_back", 2, "Stiff after sleep"),
+    ("crew-1", 3, "lower_back", 3, "Stiff after sleep, eases after exercise"),
+    ("crew-1", 1, "head", 2, "Mild headache in the afternoon"),
+    ("crew-2", 6, "left_leg", 2, "Bumped shin on a handrail"),
+    ("crew-2", 2, "neck", 1, None),
+    ("crew-3", 4, "head", 3, "Pressure feeling behind the eyes"),
+    ("crew-3", 1, "right_arm", 2, "Sore after resistance exercise"),
+    ("crew-4", 5, "abdomen", 2, "Bloated after meals"),
+    ("crew-4", 0, "upper_back", 2, None),
+]
+
+
 def snapshot(now):
     """Call the real API routes (TestClient) against the current db.DB_PATH."""
     sim.write(sim.generate(len(CREW), DAYS, 42, now=now))
@@ -46,6 +60,8 @@ def snapshot(now):
     with conn:
         conn.executemany("INSERT INTO environment (ts, co2_mmhg, temp_c, humidity_pct) VALUES (?, ?, ?, ?)",
                          cabin_rows(now, np.random.default_rng(42)))
+        conn.executemany("INSERT INTO symptom (crew_id, ts, body_part, severity_1_5, note) VALUES (?, ?, ?, ?, ?)",
+                         [(c, (now - timedelta(days=d, hours=2)).isoformat(), p, s, n) for c, d, p, s, n in DEMO_SYMPTOMS])
     conn.close()
     c = TestClient(main.app)
     get = lambda path: c.get(path).raise_for_status().json()  # noqa: E731
@@ -58,6 +74,7 @@ def snapshot(now):
         "status": {crew: get(f"/status/{crew}") for crew in CREW},
         "trends": {crew: get(f"/trends/{crew}?days={DAYS}")["indicators"] for crew in CREW},
         "environment": env,
+        "symptoms": {crew: [{**x, "source": "simulated"} for x in get(f"/symptoms?crew_id={crew}&days={DAYS}")] for crew in CREW},
         "radiation": {**get("/radiation"), "offline": False,
                       "dose_per_day_msv": [d / donki.SIX_MONTHS_DAYS for d in donki.ISS_DOSE_6MO_MSV]},
     }

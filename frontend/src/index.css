@@ -100,3 +100,22 @@ main { padding: 1rem; }
 .env-table td.green { border-left: 4px solid var(--green); }
 .env-table td.amber { border-left: 4px solid var(--amber); }
 .env-table td.red { border-left: 4px solid var(--red); }
+
+.bodymap-layout { display: grid; grid-template-columns: minmax(12rem, 18rem) 1fr; gap: 1.5rem; align-items: start; margin-top: 1rem; }
+@media (max-width: 40rem) { .bodymap-layout { grid-template-columns: 1fr; } }
+.figure { width: 100%; max-width: 18rem; display: block; }
+.figure .region { cursor: pointer; outline: none; }
+.figure .region > :not(title) { fill: #1c232b; stroke: #4a5560; stroke-width: 1.5; transition: fill 0.15s; }
+.figure .region:hover > :not(title), .figure .region:focus-visible > :not(title) { fill: #24435e; stroke: var(--accent); }
+.figure .region.selected > :not(title) { fill: #2f5f86; stroke: var(--accent); stroke-width: 2.5; }
+.figure .spine { stroke: #4a5560; stroke-dasharray: 4 4; pointer-events: none; }
+.figure .dot-mark { pointer-events: none; }
+.figure .dot-mark circle { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.figure .dot-mark text { fill: #0f1419; font-size: 11px; font-weight: 700; }
+.figure .side { fill: var(--muted); font-size: 12px; }
+.symptom-form { display: grid; gap: 0.75rem; }
+.symptom-form h2 { margin: 0; font-size: 1.1rem; }
+.note { display: grid; gap: 0.3rem; }
+.note textarea { padding: 0.4rem; font: inherit; }
+.symptom-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.symptom-list li { border-left: 3px solid var(--accent); padding-left: 0.6rem; }

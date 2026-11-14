@@ -43,10 +43,6 @@ def docs():
     )
 
 
-def todo():
-    raise HTTPException(501, "not implemented yet")
-
-
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -263,14 +259,40 @@ def list_environment(days: int = Query(30, ge=1, le=365)):
     return {"days": days, "latest": latest, "series": env_series(rows), "rows": table}
 
 
+# Body map regions (frontend/src/pages/BodyMap.jsx draws them). Left/right are the crew member's own sides.
+BODY_PARTS = ("head", "neck", "chest", "upper_back", "abdomen", "lower_back", "pelvis",
+              "left_arm", "right_arm", "left_leg", "right_leg")
+
+
+class SymptomIn(BaseModel):
+    crew_id: str = Field(min_length=1)
+    body_part: Literal[BODY_PARTS]
+    severity_1_5: int = Field(ge=1, le=5)
+    note: str | None = Field(None, max_length=500)
+
+
 @app.post("/symptoms")
-def add_symptom():
-    todo()
+def add_symptom(body: SymptomIn):
+    """Self-reported symptom on the body map. Logged for monitoring only; severity is not graded against a threshold."""
+    ts = now()
+    note = (body.note or "").strip() or None
+    conn = db.connect()
+    with conn:
+        cur = conn.execute("INSERT INTO symptom (crew_id, ts, body_part, severity_1_5, note) VALUES (?, ?, ?, ?, ?)",
+                           (body.crew_id, ts, body.body_part, body.severity_1_5, note))
+    conn.close()
+    return {"id": cur.lastrowid, "ts": ts}
 
 
 @app.get("/symptoms")
-def list_symptoms():
-    todo()
+def list_symptoms(crew_id: str, days: int = Query(14, ge=1, le=365)):
+    """This crew member's symptoms from the last `days` days, newest first."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    conn = db.connect()
+    rows = conn.execute("SELECT * FROM symptom WHERE crew_id = ? AND ts >= ? ORDER BY ts DESC, id DESC",
+                        (crew_id, since)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 DONKI_RETRY = timedelta(minutes=10)

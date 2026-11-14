@@ -11,6 +11,7 @@ const moveTs = (x) =>
 const status = moveTs(data.status)
 const trends = moveTs(data.trends)
 const environment = moveTs(data.environment)
+const symptoms = moveTs(data.symptoms)
 
 const lastDays = (series, days) => {
   const since = Date.now() - days * DAY
@@ -41,6 +42,10 @@ export function demoApi(path, options) {
   if (route === 'environment') {
     const since = Date.now() - days * DAY
     return { ...environment, days, series: lastDays(environment.series, days), rows: environment.rows.filter((r) => Date.parse(r.ts) >= since) }
+  }
+  if (route === 'symptoms') {
+    const since = Date.now() - days * DAY
+    return (symptoms[url.searchParams.get('crew_id')] ?? []).filter((s) => Date.parse(s.ts) >= since)
   }
   if (route === 'radiation') return radiation(Number(url.searchParams.get('mission_days')) || 90)
   throw new Error(`Demo mode: ${url.pathname} is not in the snapshot.`)

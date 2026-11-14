@@ -15,11 +15,6 @@ def test_schema():
         conn.execute("INSERT INTO reading (crew_id, ts, indicator, value, unit, source) VALUES ('c1','t','hr',60,'bpm','guess')")
 
 
-def test_stub_routes():
-    c = TestClient(app)
-    assert c.get("/symptoms").status_code == 501
-
-
 def test_docs_served_offline():
     """/docs must not load Swagger UI (or anything else) from a CDN."""
     c = TestClient(app)

@@ -22,4 +22,6 @@ def test_export(tmp_path, monkeypatch):
         assert {p["source"] for s in data["trends"][crew] for p in s["points"]} == {"simulated"}
     env = data["environment"]
     assert {x["source"] for x in env["latest"] + env["rows"]} == {"simulated"} and len(env["series"]) == 3
+    assert sum(len(v) for v in data["symptoms"].values()) == len(export_demo.DEMO_SYMPTOMS)
+    assert {x["source"] for v in data["symptoms"].values() for x in v} == {"simulated"}
     assert data["radiation"]["dose"]["is_estimate"] and len(data["radiation"]["dose_per_day_msv"]) == 2
