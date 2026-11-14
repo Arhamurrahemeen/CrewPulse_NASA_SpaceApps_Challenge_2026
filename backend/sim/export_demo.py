@@ -1,6 +1,6 @@
 """Snapshot for the VITE_DEMO_MODE build (public hosted link, no backend):
 
-    python -m sim.export_demo     ->  frontend/src/demo/data.json
+    python -m sim.export_demo     ->  frontend/public/demo.json
 
 Runs the real API against a throwaway database filled with the seeded simulated crew (never your real
 readings), plus the cached DONKI events (run `python -m donki.client` first when online). Everything health-
@@ -21,7 +21,7 @@ import main
 from donki import client as donki
 from sim import generate as sim
 
-OUT = Path(__file__).resolve().parents[2] / "frontend" / "src" / "demo" / "data.json"
+OUT = Path(__file__).resolve().parents[2] / "frontend" / "public" / "demo.json"
 CREW = [f"crew-{i}" for i in range(1, 5)]
 DAYS = 90
 

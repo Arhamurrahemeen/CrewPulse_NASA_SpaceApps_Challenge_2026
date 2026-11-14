@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api, INDICATORS } from '../api.js'
+import { api, DEMO, INDICATORS } from '../api.js'
 
 const [HR_MIN, HR_MAX] = INDICATORS.heart_rate.limits
 
@@ -59,10 +59,16 @@ export default function CheckIn() {
         Press q in the camera window to cancel. Wearing a pulse oximeter? Note its heart rate when the scan
         ends and save it below the result — those pairs measure how accurate the camera is.
       </p>
+      {DEMO && (
+        <div className="card warn">
+          Camera check-in is turned off in this online demo: it needs the CrewPulse backend running on your own
+          computer, where the camera is read locally and never uploaded. Run the app locally to try it.
+        </div>
+      )}
       <label>
-        Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} disabled={state === 'scanning'} />
+        Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} disabled={DEMO || state === 'scanning'} />
       </label>
-      <button onClick={scan} disabled={state === 'scanning' || !crew}>
+      <button onClick={scan} disabled={DEMO || state === 'scanning' || !crew}>
         {state === 'scanning' ? 'Scanning… keep still (~45 s)' : 'Start check-in'}
       </button>
 

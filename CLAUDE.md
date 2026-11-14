@@ -48,7 +48,7 @@ Known issue: in one informal test the old green-channel build read 15–25 BPM l
 - `backend/` — Python 3.11+, FastAPI, SQLite (stdlib `sqlite3`), OpenCV, MediaPipe, NumPy, SciPy, httpx.
 - `frontend/` — React + Vite, Recharts for charts, plain CSS. No heavy UI frameworks.
 - Runs locally: backend on `localhost:8000`, frontend on `localhost:5173`.
-- `frontend` has a `VITE_DEMO_MODE=true` build that uses bundled simulated JSON and no backend (for the public hosted link).
+- `frontend` has a `VITE_DEMO_MODE=true` build (`npm run build:demo`) that reads simulated data from `public/demo.json` and needs no backend; GitHub Actions deploys it to GitHub Pages on every push to main.
 
 ## Layout
 ```
@@ -85,7 +85,7 @@ tools/validate.py      camera vs oximeter pairs → MAE, bias, Bland–Altman PN
 - Frontend: `cd frontend && npm install && npm run dev`
 - Tests: `cd backend && pytest -q`
 - Simulated data: `python -m sim.generate --crew 4 --days 90 --seed 42`
-- Demo build (public link, no backend): `cd backend && python -m donki.client && python -m sim.export_demo` (writes `frontend/src/demo/data.json`), then `cd frontend && npm run build:demo` → static site in `frontend/dist-demo/` (relative paths, host anywhere). Preview: `npx vite preview --outDir dist-demo`
+- Demo build (public link, no backend): `cd backend && python -m donki.client && python -m sim.export_demo` (writes `frontend/public/demo.json`), then `cd frontend && npm run build:demo` → static site in `frontend/dist-demo/` (relative paths, host anywhere). Preview: `npx vite preview --outDir dist-demo`
 
 ## Definition of done (per feature)
 Works with Wi-Fi off · has a test or a manual check note · no console errors · every number on screen shows its unit and, for thresholds, its source.

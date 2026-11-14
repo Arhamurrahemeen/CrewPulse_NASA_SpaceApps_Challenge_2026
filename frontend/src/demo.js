@@ -1,26 +1,28 @@
-// VITE_DEMO_MODE: answers api() calls from the bundled snapshot (backend/sim/export_demo.py), no backend.
+// VITE_DEMO_MODE: answers api() calls from public/demo.json (backend/sim/export_demo.py), no backend.
 // Read-only. Timestamps are shifted so the simulated history always ends "now".
-import data from './demo/data.json'
+// Snapshot in public/demo.json, fetched once (relative to the site base, so it works under /<repo>/ on GitHub Pages).
+const loaded = fetch(`${import.meta.env.BASE_URL}demo.json`)
+  .then((r) => {
+    if (!r.ok) throw new Error(`Demo data not found (HTTP ${r.status}).`)
+    return r.json()
+  })
+  .then((data) => {
+    const shift = Date.now() - Date.parse(data.exported_at) // keep the simulated history ending "now"
+    const moveTs = (x) =>
+      Array.isArray(x) ? x.map(moveTs)
+        : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === 'ts' ? new Date(Date.parse(v) + shift).toISOString() : moveTs(v)]))
+          : x
+    return { ...moveTs({ status: data.status, trends: data.trends, environment: data.environment, symptoms: data.symptoms }), crew: data.crew, radiation: data.radiation }
+  })
 
 const DAY = 864e5
-const shift = Date.now() - Date.parse(data.exported_at)
-const moveTs = (x) =>
-  Array.isArray(x) ? x.map(moveTs)
-    : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === 'ts' ? new Date(Date.parse(v) + shift).toISOString() : moveTs(v)]))
-      : x
-const status = moveTs(data.status)
-const trends = moveTs(data.trends)
-const environment = moveTs(data.environment)
-const symptoms = moveTs(data.symptoms)
-
 const lastDays = (series, days) => {
   const since = Date.now() - days * DAY
   return series.map((s) => ({ ...s, points: s.points.filter((p) => Date.parse(p.ts) >= since) })).filter((s) => s.points.length)
 }
 const round1 = (x) => Math.round(x * 10) / 10
 
-function radiation(missionDays) {
-  const r = data.radiation
+function radiation(r, missionDays) {
   const [lo, hi] = r.dose_per_day_msv.map((d) => round1(d * missionDays))
   const limit = r.dose.career_limit_msv
   return {
@@ -32,8 +34,9 @@ function radiation(missionDays) {
 
 export const READ_ONLY = 'Demo mode: this public build is a read-only snapshot, so nothing is saved. Run CrewPulse locally to log data or use the camera check-in.'
 
-export function demoApi(path, options) {
+export async function demoApi(path, options) {
   if (options?.method && options.method !== 'GET') throw new Error(READ_ONLY)
+  const { status, trends, environment, symptoms, radiation: rad } = await loaded
   const url = new URL(path, 'http://demo')
   const days = Number(url.searchParams.get('days')) || 30
   const [, route, crew] = url.pathname.split('/').map(decodeURIComponent)
@@ -47,8 +50,7 @@ export function demoApi(path, options) {
     const since = Date.now() - days * DAY
     return (symptoms[url.searchParams.get('crew_id')] ?? []).filter((s) => Date.parse(s.ts) >= since)
   }
-  if (route === 'radiation') return radiation(Number(url.searchParams.get('mission_days')) || 90)
+  if (route === 'radiation') return radiation(rad, Number(url.searchParams.get('mission_days')) || 90)
   throw new Error(`Demo mode: ${url.pathname} is not in the snapshot.`)
 }
 
-export const DEMO_CREW = data.crew
