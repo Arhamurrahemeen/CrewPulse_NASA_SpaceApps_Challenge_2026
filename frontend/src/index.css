@@ -62,3 +62,7 @@ main { padding: 1rem; }
 .trend figcaption { margin-bottom: 0.4rem; }
 .chart-note { font-size: 0.8rem; margin-top: 0.3rem; }
 .chart-tip { background: #1b2229; border: 1px solid #2a3139; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.85rem; }
+.badges { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; }
+.unusual-badge { border-color: var(--amber); color: #0f1419; background: var(--amber); font-weight: 700; }
+.reasons { margin: 0.4rem 0; padding-left: 1.1rem; color: var(--amber); font-size: 0.85rem; }
+.reasons li:last-child { color: var(--muted); list-style: none; margin-left: -1.1rem; }

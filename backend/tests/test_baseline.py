@@ -89,3 +89,13 @@ def test_status_includes_baseline(tmp_path, monkeypatch):
     hr = TestClient(main.app).get("/status/c1").json()[0]
     assert hr["value"] == 75 and hr["status"] == "green"  # in the cited range...
     assert hr["baseline"]["unusual"] and hr["baseline"]["z"] > 2  # ...but unusual for this person
+
+
+def test_reasons_text():
+    assert baseline(series(noisy(21) + [60.5]))["reasons"] == []
+    up = baseline(series(noisy(21) + [70, 70]), "bpm")["reasons"]
+    assert len(up) >= 1 and up[0].startswith("Above your usual range two days in a row") and "bpm" in up[0]
+    down = baseline(series(noisy(21) + [50, 50]), "bpm")["reasons"]
+    assert down[0].startswith("Below your usual range")
+    rising = baseline(series(noisy(21, sd=1.0) + [60 + 1.5 * i for i in range(7)]), "bpm")["reasons"]
+    assert any(r.startswith("Steady rise over the last 7 days") and "bpm/day" in r for r in rising)

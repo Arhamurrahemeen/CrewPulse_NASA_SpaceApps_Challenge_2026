@@ -103,6 +103,11 @@
       "value": null,
       "todo": "No cited threshold: short-term RMSSD norms are method-dependent (Nunan et al. 2010). Entered from a chest-strap ECG or similar device, never from the camera (CLAUDE.md). Tracked against personal baseline only."
     },
+    "bone_tibia_bmd_pct": {
+      "label": "Tibia BMD change (modelled)", "unit": "%", "limits": [-20, 5],
+      "value": null,
+      "todo": "Simulation only: astronauts cannot self-measure BMD (HR-pQCT scans pre/post flight). Gabel et al. 2022 report median -3.4% tibia total BMD at return; no in-flight threshold."
+    },
     "mood": {
       "label": "Mood", "unit": "/5", "limits": [1, 5], "integer": true,
       "value": null,

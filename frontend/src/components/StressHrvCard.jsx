@@ -1,4 +1,4 @@
-import { Baseline } from './StatusCard.jsx'
+import { Baseline, UnusualBadge } from './StatusCard.jsx'
 
 // Stress (self-report) and HRV (device) side by side. Deliberately no combined "stress score":
 // there is no validated way to turn HRV into stress, and neither has a cited threshold (no colour).
@@ -7,6 +7,9 @@ export default function StressHrvCard({ parts }) {
     <article className="status-card none">
       <header>
         <h2>Stress &amp; HRV</h2>
+        <span className="badges">
+          {parts.map((p) => <UnusualBadge key={p.indicator} b={p.baseline} />)}
+        </span>
       </header>
       <div className="pair">
         {parts.map((p) => (

@@ -152,7 +152,7 @@ def status(crew_id: str):
     # ponytail: loads the crew's full history per call; fine for months of data, add a ts cut-off if it grows to years
     return [
         {**by_ind[ind][-1], "label": spec["label"], **engine.evaluate(ind, by_ind[ind][-1]["value"]),
-         "baseline": baseline_engine.baseline([(r["ts"], r["value"]) for r in by_ind[ind]])}
+         "baseline": baseline_engine.baseline([(r["ts"], r["value"]) for r in by_ind[ind]], spec["unit"])}
         for ind, spec in engine.INDICATORS.items() if ind in by_ind
     ]
 

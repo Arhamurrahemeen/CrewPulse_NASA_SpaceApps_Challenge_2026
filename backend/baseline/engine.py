@@ -32,8 +32,9 @@ def daily_means(readings):
     return sorted((d, float(np.mean(vs))) for d, vs in days.items())
 
 
-def baseline(readings):
-    """Compare the latest day with the personal baseline. readings: [(iso_ts, value)] of one indicator."""
+def baseline(readings, unit=""):
+    """Compare the latest day with the personal baseline. readings: [(iso_ts, value)] of one indicator.
+    `reasons` holds plain-English explanations for the "Unusual for you" badge (empty when nothing is flagged)."""
     days = daily_means(readings)
     if not days:
         return None
@@ -42,7 +43,7 @@ def baseline(readings):
     history = [v for d, v in days if 2 <= (latest_day - d).days <= WINDOW_DAYS + 1]
     out = {"window_days": WINDOW_DAYS, "n_days": len(history), "min_days": MIN_DAYS, "ready": len(history) >= MIN_DAYS,
            "mean": None, "sd": None, "z": None, "z_prev": None, "unusual": False,
-           "slope_per_day": None, "slope_p": None, "trend": False}
+           "slope_per_day": None, "slope_p": None, "trend": False, "reasons": []}
     if not out["ready"]:
         return out
 
@@ -63,4 +64,12 @@ def baseline(readings):
         if np.isfinite(fit.pvalue):
             out.update(slope_per_day=round(float(fit.slope), 3), slope_p=round(float(fit.pvalue), 4),
                        trend=bool(fit.pvalue < 0.05 and sd > 0 and abs(fit.slope) * TREND_DAYS >= sd))
+
+    if out["unusual"]:
+        side = "Above" if out["z"] > 0 else "Below"
+        out["reasons"].append(f"{side} your usual range two days in a row "
+                              f"(yesterday z {out['z_prev']:+.1f}, today z {out['z']:+.1f}; usual {mean:.1f} ± {sd:.1f} {unit})".replace(" )", ")"))
+    if out["trend"]:
+        word = "rise" if out["slope_per_day"] > 0 else "fall"
+        out["reasons"].append(f"Steady {word} over the last {TREND_DAYS} days ({out['slope_per_day']:+.2f} {unit}/day)")
     return out

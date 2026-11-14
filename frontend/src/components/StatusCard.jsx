@@ -5,6 +5,9 @@ import SimulatedBadge from './SimulatedBadge.jsx'
 const fmt = (x) => (x > 0 ? '+' : '') + x
 
 // Personal baseline (statistics on this crew member's own history, not a medical threshold).
+export const UnusualBadge = ({ b }) =>
+  b?.reasons?.length > 0 ? <span className="badge unusual-badge" title={b.reasons.join(' · ')}>Unusual for you</span> : null
+
 export function Baseline({ b, unit }) {
   if (!b) return null
   if (!b.ready) return <p className="baseline muted">Building your baseline: {b.n_days}/{b.min_days} days of history.</p>
@@ -16,8 +19,12 @@ export function Baseline({ b, unit }) {
         {b.z_prev != null && <>, yesterday z = {fmt(b.z_prev)}</>}
         {b.slope_per_day != null && <> · 7-day trend {fmt(b.slope_per_day)} {unit}/day</>}
       </div>
-      {b.unusual && <p className="unusual">Unusual vs your baseline two days in a row. Consider a re-check.</p>}
-      {b.trend && <p className="unusual">Steady {b.slope_per_day > 0 ? 'rise' : 'fall'} over the last 7 days. Keep monitoring.</p>}
+      {b.reasons?.length > 0 && (
+        <ul className="reasons">
+          {b.reasons.map((r) => <li key={r}>{r}</li>)}
+          <li>Consider a re-check and keep monitoring.</li>
+        </ul>
+      )}
     </div>
   )
 }
@@ -27,7 +34,10 @@ export default function StatusCard({ label, value, unit, ts, source, status, ban
     <article className={`status-card ${status ?? 'none'}`}>
       <header>
         <h2>{label}</h2>
-        {source === 'simulated' ? <SimulatedBadge /> : <span className="badge">{source}</span>}
+        <span className="badges">
+          <UnusualBadge b={baseline} />
+          {source === 'simulated' ? <SimulatedBadge /> : <span className="badge">{source}</span>}
+        </span>
       </header>
       <div className="big">
         {value} <span>{unit}</span>
