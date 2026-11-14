@@ -62,6 +62,13 @@ def test_checkin_endpoint(tmp_path, monkeypatch):
     r = c.post("/checkin", params={"crew_id": "c1"}).json()
     assert r["bpm"] is None
 
+    def cancelled():
+        raise main.rppg_checkin.ScanCancelled
+
+    monkeypatch.setattr(main.rppg_checkin, "scan", cancelled)
+    r = c.post("/checkin", params={"crew_id": "c1"}).json()
+    assert r["cancelled"] and r["bpm"] is None
+
     conn = db.connect()
     rows = conn.execute("SELECT indicator, unit, source FROM reading").fetchall()
     conn.close()

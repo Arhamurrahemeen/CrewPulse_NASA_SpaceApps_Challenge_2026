@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 import db
 from rppg import checkin as rppg_checkin
@@ -13,6 +14,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/docs")
 
 
 def todo():
@@ -34,6 +40,8 @@ def checkin(crew_id: str):
     """Blocking 30 s webcam scan. Only an accepted scan is stored and returns a bpm."""
     try:
         result = rppg_checkin.scan()
+    except rppg_checkin.ScanCancelled:
+        return {"bpm": None, "accepted": False, "cancelled": True, "message": "Scan cancelled."}
     except RuntimeError as e:  # no camera / no face model
         raise HTTPException(503, str(e))
     if not result["accepted"]:
