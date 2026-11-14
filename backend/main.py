@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
+import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 import db
+from donki import client as donki
 from baseline import engine as baseline_engine
 from rppg import checkin as rppg_checkin
 from rules import engine
@@ -204,5 +206,17 @@ def list_symptoms():
 
 
 @app.get("/radiation")
-def radiation():
-    todo()
+def radiation(mission_days: int = Query(90, ge=1, le=1000), refresh: bool = False):
+    """Cached DONKI events (refreshed when online and older than 6 h) + an estimated mission dose."""
+    data, offline = donki.load(), False
+    age_h = None if data is None else (datetime.now(timezone.utc) - datetime.fromisoformat(data["fetched_at"])).total_seconds() / 3600
+    if refresh or data is None or age_h > 6:
+        try:
+            data, age_h = donki.refresh(), 0.0
+        except httpx.HTTPError:
+            offline = True  # keep serving the cache
+    if data is None:
+        raise HTTPException(503, "No cached space-weather data yet and DONKI is unreachable. Connect once to fetch it.")
+    counts = {t: sum(e["type"] == t for e in data["events"]) for t in donki.TYPES}
+    return {**data, "age_hours": round(age_h, 1), "offline": offline, "counts": counts,
+            "dose": donki.estimate_dose(mission_days), "credit": donki.CREDIT}

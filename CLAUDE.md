@@ -96,6 +96,8 @@ Works with Wi-Fi off · has a test or a manual check note · no console errors �
 - Bone loss ranges: Gabel et al. 2022 — https://doi.org/10.1038/s41598-022-13461-1
 - Behavioural health: NASA OCHMO TB-016 — https://www.nasa.gov/ochmo/health-operations-and-oversight/hsa-standards/
 - Spaceflight limits (SpO₂, temp, CO₂): NASA-STD-3001 — https://www.nasa.gov/reference/nasa-std-3001v1/  (values TODO — look up, don't guess)
-- Radiation events: NASA CCMC DONKI — https://ccmc.gsfc.nasa.gov/tools/DONKI/
+- Radiation events: NASA CCMC DONKI — https://ccmc.gsfc.nasa.gov/tools/DONKI/ (API: https://ccmc.gsfc.nasa.gov/DONKI-API/get/<TYPE>; kauai.ccmc… did not connect on 2026-11-14)
+- Estimated ISS dose 80 mSv (solar max) – 160 mSv (solar min) per 6 months: NASA, Space Faring: The Radiation Challenge — https://www.nasa.gov/wp-content/uploads/2017/04/radiationchallenge.pdf
+- Career dose limit 600 mSv: NASA-STD-3001 Vol 1 Rev C, [V1 4030]
 - Resting heart rate 60–100 bpm: American Heart Association, All About Heart Rate — https://www.heart.org/en/health-topics/high-blood-pressure/the-facts-about-high-blood-pressure/all-about-heart-rate-pulse
 - Fever ≥ 38 °C (100.4 °F): CDC, Definitions of Signs, Symptoms, and Conditions of Ill Travelers — https://www.cdc.gov/quarantine/maritime/definitions-signs-symptoms-conditions-ill-travelers.html
