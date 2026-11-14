@@ -67,6 +67,7 @@ def test_dose_estimate():
 @pytest.fixture
 def api(tmp_path, monkeypatch):
     monkeypatch.setattr(donki, "CACHE_PATH", tmp_path / "cache" / "donki.json")
+    monkeypatch.setattr(main, "_donki_retry_after", None)
     return TestClient(main.app)
 
 
@@ -100,3 +101,15 @@ def test_fresh_cache_not_refetched(api, monkeypatch):
     monkeypatch.setattr(donki, "fetch_all", lambda **kw: pytest.fail("should use the fresh cache"))
     assert api.get("/radiation").json()["offline"] is False
 
+
+
+def test_offline_backoff(api, monkeypatch):
+    """After a failed fetch, stale-cache requests skip the network for a while; an explicit refresh still tries."""
+    donki.save({"fetched_at": (datetime.now(timezone.utc) - timedelta(hours=30)).isoformat(), "start": "a", "end": "b",
+                "api": "x", "events": []})
+    calls = []
+    monkeypatch.setattr(donki, "fetch_all", lambda **kw: calls.append(1) or offline())
+    assert api.get("/radiation").json()["offline"] and api.get("/radiation").json()["offline"]
+    assert len(calls) == 1
+    api.get("/radiation", params={"refresh": True})
+    assert len(calls) == 2

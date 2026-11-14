@@ -61,6 +61,7 @@ backend/
   baseline/engine.py   rolling mean/SD, z-score, 7-day slope
   sim/generate.py      90-day crew history from published ranges (seeded, reproducible)
   donki/client.py      fetch SEP/FLR/CME/GST → cache/donki.json; offline fallback
+  static/swagger/      Swagger UI 5.34.1 (Apache-2.0) vendored so /docs works offline
   tests/               pytest
 frontend/src/
   pages/ Dashboard, CheckIn, Log, Radiation, Environment, BodyMap

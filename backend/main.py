@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Literal
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import db
@@ -13,7 +16,10 @@ from baseline import engine as baseline_engine
 from rppg import checkin as rppg_checkin
 from rules import engine
 
-app = FastAPI(title="CrewPulse")
+# Offline by design: FastAPI's default /docs loads Swagger UI from a CDN, so it is served from backend/static instead.
+STATIC = Path(__file__).parent / "static"
+app = FastAPI(title="CrewPulse", docs_url=None, redoc_url=None)
+app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -25,6 +31,16 @@ app.add_middleware(
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse("/docs")
+
+
+@app.get("/docs", include_in_schema=False)
+def docs():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url, title="CrewPulse API",
+        swagger_js_url="/static/swagger/swagger-ui-bundle.js", swagger_css_url="/static/swagger/swagger-ui.css",
+        swagger_favicon_url="data:,",  # default favicon is fetched from fastapi.tiangolo.com
+        swagger_ui_parameters={"validatorUrl": None},  # no calls to validator.swagger.io
+    )
 
 
 def todo():
@@ -257,16 +273,24 @@ def list_symptoms():
     todo()
 
 
+DONKI_RETRY = timedelta(minutes=10)
+_donki_retry_after = None  # after a failed fetch, serve the cache without waiting on the network again
+
+
 @app.get("/radiation")
 def radiation(mission_days: int = Query(90, ge=1, le=1000), refresh: bool = False):
     """Cached DONKI events (refreshed when online and older than 6 h) + an estimated mission dose."""
     data, offline = donki.load(), False
     age_h = None if data is None else (datetime.now(timezone.utc) - datetime.fromisoformat(data["fetched_at"])).total_seconds() / 3600
+    global _donki_retry_after
     if refresh or data is None or age_h > 6:
-        try:
-            data, age_h = donki.refresh(), 0.0
-        except httpx.HTTPError:
-            offline = True  # keep serving the cache
+        if not refresh and _donki_retry_after and datetime.now(timezone.utc) < _donki_retry_after:
+            offline = True  # failed recently: no-internet networks can make each attempt wait for the connect timeout
+        else:
+            try:
+                data, age_h, _donki_retry_after = donki.refresh(), 0.0, None
+            except httpx.HTTPError:
+                offline, _donki_retry_after = True, datetime.now(timezone.utc) + DONKI_RETRY  # keep serving the cache
     if data is None:
         raise HTTPException(503, "No cached space-weather data yet and DONKI is unreachable. Connect once to fetch it.")
     counts = {t: sum(e["type"] == t for e in data["events"]) for t in donki.TYPES}

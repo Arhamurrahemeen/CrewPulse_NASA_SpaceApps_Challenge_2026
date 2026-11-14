@@ -18,3 +18,12 @@ def test_schema():
 def test_stub_routes():
     c = TestClient(app)
     assert c.get("/symptoms").status_code == 501
+
+
+def test_docs_served_offline():
+    """/docs must not load Swagger UI (or anything else) from a CDN."""
+    c = TestClient(app)
+    html = c.get("/docs").text
+    assert "/static/swagger/swagger-ui-bundle.js" in html and "cdn." not in html and "tiangolo.com" not in html
+    assert c.get("/static/swagger/swagger-ui-bundle.js").status_code == 200
+    assert c.get("/static/swagger/swagger-ui.css").status_code == 200
