@@ -93,6 +93,16 @@
          "guidance": "At or above 6 h."}
       ]
     },
+    "stress": {
+      "label": "Stress (self-report)", "unit": "/10", "limits": [0, 10], "integer": true,
+      "value": null,
+      "todo": "No cited threshold in the CLAUDE.md sources. Self-rated 0-10 (SNRS-11 style, validation still limited); tracked against personal baseline only."
+    },
+    "hrv_rmssd": {
+      "label": "HRV (RMSSD)", "unit": "ms", "limits": [1, 300],
+      "value": null,
+      "todo": "No cited threshold: short-term RMSSD norms are method-dependent (Nunan et al. 2010). Entered from a chest-strap ECG or similar device, never from the camera (CLAUDE.md). Tracked against personal baseline only."
+    },
     "mood": {
       "label": "Mood", "unit": "/5", "limits": [1, 5], "integer": true,
       "value": null,

@@ -65,7 +65,7 @@ def test_every_band_edge_is_covered():
                 assert (ind, band["below"]) in tested, f"{ind} edge {band['below']} has no test"
 
 
-@pytest.mark.parametrize("ind", ["spo2", "mood"])
+@pytest.mark.parametrize("ind", ["spo2", "mood", "stress", "hrv_rmssd"])
 def test_uncited_indicators_have_no_colour(ind):
     spec = INDICATORS[ind]
     assert spec["value"] is None and spec["todo"] and "bands" not in spec

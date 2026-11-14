@@ -7,7 +7,9 @@ Team: **OmniteX** — Muhammad Arham (lead), Abdul Awwal. Project name: **CrewPu
 
 ## What we are building
 An **offline-first** dashboard that lets an astronaut assess their own health:
-1. Collect readings: heart rate, blood pressure, blood glucose, body temperature, sleep hours, mood (1–5), SpO₂.
+1. Collect readings: heart rate, blood pressure, blood glucose, body temperature, sleep hours, mood (1–5), SpO₂,
+   self-reported stress (0–10) and HRV (RMSSD, ms, typed in from a chest-strap ECG or similar device — never the camera).
+   Stress and HRV are shown side by side with no combined score (mentor requirement; no validated HRV→stress method).
    Inputs: manual entry (keyboard/buttons), camera check-in (rPPG heart rate), oximeter value typed in.
 2. Colour-code each reading green / amber / red against **cited** thresholds.
 3. Flag **unusual changes vs the astronaut's own baseline** (rolling mean ± 2 SD, 7-day trend slope).

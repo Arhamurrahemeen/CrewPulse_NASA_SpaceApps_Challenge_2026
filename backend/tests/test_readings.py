@@ -46,3 +46,13 @@ def test_log_then_status(client):
 
 def test_status_unknown_crew_is_empty(client):
     assert client.get("/status/nobody").json() == []
+
+
+def test_stress_and_hrv(client):
+    assert post(client, ("stress", 11, "manual")).status_code == 422
+    assert post(client, ("stress", 2.5, "manual")).status_code == 422
+    assert post(client, ("hrv_rmssd", 42.5, "oximeter")).status_code == 422  # HRV is typed from a device, not an oximeter
+    assert post(client, ("stress", 0, "manual"), ("hrv_rmssd", 42.5, "manual")).status_code == 200  # 0 is a valid stress
+    s = {x["indicator"]: x for x in client.get("/status/c1").json()}
+    assert (s["stress"]["value"], s["stress"]["unit"], s["stress"]["status"]) == (0, "/10", None)
+    assert (s["hrv_rmssd"]["value"], s["hrv_rmssd"]["unit"], s["hrv_rmssd"]["status"]) == (42.5, "ms", None)

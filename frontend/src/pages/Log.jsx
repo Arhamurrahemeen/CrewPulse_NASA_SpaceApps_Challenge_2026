@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { api, INDICATORS } from '../api.js'
 
 // Form rows in display order. step: 1 for whole-number indicators, else decimals.
-const ROWS = [['heart_rate'], ['bp_systolic', 'bp_diastolic'], ['glucose_fasting'], ['body_temp'], ['spo2'], ['sleep_hours']]
-const STEP = { body_temp: 0.1, sleep_hours: 0.25 }
+const ROWS = [['heart_rate'], ['bp_systolic', 'bp_diastolic'], ['glucose_fasting'], ['body_temp'], ['spo2'], ['sleep_hours'], ['hrv_rmssd']]
+const STEP = { body_temp: 0.1, sleep_hours: 0.25, hrv_rmssd: 0.1 }
 
 function NumberField({ id, value, onChange }) {
   const s = INDICATORS[id]
@@ -18,6 +18,21 @@ function NumberField({ id, value, onChange }) {
       <span className="unit">{s.unit}</span>
       <small className="muted">{lo}–{hi}</small>
     </label>
+  )
+}
+
+function Scale({ id, from, to, hint, value, onChange }) {
+  return (
+    <fieldset className="row">
+      <legend>{INDICATORS[id].label}</legend>
+      {Array.from({ length: to - from + 1 }, (_, i) => from + i).map((n) => (
+        <label key={n} className="mood">
+          <input type="radio" name={id} checked={value === n} onChange={() => onChange(id, n)} />
+          {n}
+        </label>
+      ))}
+      <span className="unit">{INDICATORS[id].unit} ({hint})</span>
+    </fieldset>
   )
 }
 
@@ -72,19 +87,12 @@ export default function Log() {
             </label>
           )}
           {row[0] === 'spo2' && <small className="muted">Recorded as oximeter</small>}
+          {row[0] === 'hrv_rmssd' && <small className="muted">RMSSD from a chest-strap ECG or similar device, not the camera</small>}
         </fieldset>
       ))}
 
-      <fieldset className="row">
-        <legend>Mood</legend>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <label key={n} className="mood">
-            <input type="radio" name="mood" checked={values.mood === n} onChange={() => set('mood', n)} />
-            {n}
-          </label>
-        ))}
-        <span className="unit">/5 (1 = very low, 5 = very good)</span>
-      </fieldset>
+      <Scale id="mood" from={1} to={5} hint="1 = very low, 5 = very good" value={values.mood} onChange={set} />
+      <Scale id="stress" from={0} to={10} hint="how stressed do you feel right now? 0 = not at all, 10 = extremely" value={values.stress} onChange={set} />
 
       <button type="submit">Save</button>
       {msg?.ok && <div className="card ok">{msg.ok}</div>}

@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 import db
+from baseline import engine as baseline_engine
 from rppg import checkin as rppg_checkin
 from rules import engine
 
@@ -141,20 +142,18 @@ def checkin_oximeter(body: OximeterPair):
 
 @app.get("/status/{crew_id}")
 def status(crew_id: str):
-    """Latest reading per indicator with its colour, guidance and source. baseline: added with baseline/engine."""
+    """Latest reading per indicator with its colour, guidance, source and personal-baseline comparison."""
     conn = db.connect()
-    rows = conn.execute(
-        """SELECT r.* FROM reading r
-           JOIN (SELECT indicator, MAX(ts) AS ts FROM reading WHERE crew_id = ? GROUP BY indicator) m
-             ON r.indicator = m.indicator AND r.ts = m.ts
-           WHERE r.crew_id = ? ORDER BY r.id""",
-        (crew_id, crew_id),
-    ).fetchall()
+    rows = [dict(r) for r in conn.execute("SELECT * FROM reading WHERE crew_id = ? ORDER BY ts, id", (crew_id,))]
     conn.close()
-    latest = {r["indicator"]: dict(r) for r in rows}  # same-ts duplicates: last id wins
+    by_ind = {}
+    for r in rows:
+        by_ind.setdefault(r["indicator"], []).append(r)
+    # ponytail: loads the crew's full history per call; fine for months of data, add a ts cut-off if it grows to years
     return [
-        {**latest[ind], "label": spec["label"], **engine.evaluate(ind, latest[ind]["value"]), "baseline": None}
-        for ind, spec in engine.INDICATORS.items() if ind in latest
+        {**by_ind[ind][-1], "label": spec["label"], **engine.evaluate(ind, by_ind[ind][-1]["value"]),
+         "baseline": baseline_engine.baseline([(r["ts"], r["value"]) for r in by_ind[ind]])}
+        for ind, spec in engine.INDICATORS.items() if ind in by_ind
     ]
 
 

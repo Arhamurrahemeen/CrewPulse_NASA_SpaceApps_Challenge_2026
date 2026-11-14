@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import StatusCard from '../components/StatusCard.jsx'
+import StressHrvCard from '../components/StressHrvCard.jsx'
 
 const RANK = { red: 3, amber: 2, green: 1 }
 
@@ -14,6 +15,15 @@ function mergeBp(items) {
   return items.flatMap((x) => (x === sys ? [bp] : x === dia ? [] : [x]))
 }
 
+// Self-reported stress and device HRV share one card (no combined score).
+function mergeStressHrv(items) {
+  const parts = items.filter((x) => x.indicator === 'stress' || x.indicator === 'hrv_rmssd')
+  if (!parts.length) return items
+  const at = items.indexOf(parts[0])
+  const rest = items.filter((x) => !parts.includes(x))
+  return [...rest.slice(0, at), { indicator: 'stress_hrv', parts }, ...rest.slice(at)]
+}
+
 export default function Dashboard() {
   const [crew, setCrew] = useState('c1')
   const [items, setItems] = useState(null)
@@ -22,7 +32,7 @@ export default function Dashboard() {
   async function load() {
     setError(null)
     try {
-      setItems(mergeBp(await api(`/status/${encodeURIComponent(crew)}`)))
+      setItems(mergeStressHrv(mergeBp(await api(`/status/${encodeURIComponent(crew)}`))))
     } catch (e) {
       setError(e.message)
     }
@@ -39,7 +49,7 @@ export default function Dashboard() {
       <button onClick={load}>Refresh</button>
       {error && <div className="card warn">{error}</div>}
       {items?.length === 0 && <p>No readings yet. Log some on the Log page or run a check-in.</p>}
-      <div className="grid">{items?.map((x) => <StatusCard key={x.indicator} {...x} />)}</div>
+      <div className="grid">{items?.map((x) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} /> : <StatusCard key={x.indicator} {...x} />))}</div>
     </section>
   )
 }
