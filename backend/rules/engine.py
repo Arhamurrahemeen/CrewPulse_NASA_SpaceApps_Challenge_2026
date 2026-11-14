@@ -19,16 +19,18 @@ def check_value(indicator, value):
 
 
 def evaluate(indicator, value):
-    """-> {status, band, guidance, escalate, source_title, source_url}; status None when no cited threshold."""
-    for band in INDICATORS[indicator].get("bands", []):
+    """-> {status, band, guidance, escalate_to_flight_surgeon, source_title, source_url}.
+    status is None when the indicator has no cited threshold (value: null + todo)."""
+    spec = INDICATORS[indicator]
+    for band in spec.get("bands", []):
         if "below" not in band or value < band["below"]:
             return {
                 "status": band["status"],
                 "band": band["label"],
                 "guidance": band["guidance"],
-                "escalate": band.get("escalate", False),
-                "source_title": band["source_title"],
-                "source_url": band["source_url"],
+                "escalate_to_flight_surgeon": band["escalate_to_flight_surgeon"],
+                "source_title": spec["source_title"],
+                "source_url": spec["source_url"],
             }
-    return {"status": None, "band": "No cited threshold yet", "guidance": None, "escalate": False,
-            "source_title": None, "source_url": None}
+    return {"status": None, "band": "No cited threshold yet", "guidance": None,
+            "escalate_to_flight_surgeon": False, "source_title": None, "source_url": None}

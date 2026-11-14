@@ -95,3 +95,5 @@ Works with Wi-Fi off · has a test or a manual check note · no console errors �
 - Behavioural health: NASA OCHMO TB-016 — https://www.nasa.gov/ochmo/health-operations-and-oversight/hsa-standards/
 - Spaceflight limits (SpO₂, temp, CO₂): NASA-STD-3001 — https://www.nasa.gov/reference/nasa-std-3001v1/  (values TODO — look up, don't guess)
 - Radiation events: NASA CCMC DONKI — https://ccmc.gsfc.nasa.gov/tools/DONKI/
+- Resting heart rate 60–100 bpm: American Heart Association, All About Heart Rate — https://www.heart.org/en/health-topics/high-blood-pressure/the-facts-about-high-blood-pressure/all-about-heart-rate-pulse
+- Fever ≥ 38 °C (100.4 °F): CDC, Definitions of Signs, Symptoms, and Conditions of Ill Travelers — https://www.cdc.gov/quarantine/maritime/definitions-signs-symptoms-conditions-ill-travelers.html

@@ -1,9 +1,8 @@
+import GuidancePanel from './GuidancePanel.jsx'
 import SourceLink from './SourceLink.jsx'
 import SimulatedBadge from './SimulatedBadge.jsx'
 
-const STATUS_TEXT = { green: 'In range', amber: 'Check', red: 'Attention' }
-
-export default function StatusCard({ label, value, unit, ts, source, status, band, guidance, escalate, source_title, source_url }) {
+export default function StatusCard({ label, value, unit, ts, source, status, band, guidance, escalate_to_flight_surgeon, source_title, source_url }) {
   return (
     <article className={`status-card ${status ?? 'none'}`}>
       <header>
@@ -14,11 +13,7 @@ export default function StatusCard({ label, value, unit, ts, source, status, ban
         {value} <span>{unit}</span>
       </div>
       <div className="muted">{new Date(ts).toLocaleString()}</div>
-      <p>
-        <strong>{status ? `${STATUS_TEXT[status]}: ${band}` : band}</strong>
-        {guidance && <> — {guidance}</>}
-      </p>
-      {escalate && <p className="escalate">Contact flight surgeons.</p>}
+      <GuidancePanel status={status} band={band} guidance={guidance} escalate={escalate_to_flight_surgeon} />
       {source_url && <SourceLink title={source_title} url={source_url} />}
     </article>
   )

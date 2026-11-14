@@ -1,46 +1,10 @@
-import json
+"""POST/GET /readings and GET /status. Band edges live in test_rules.py."""
 
 import pytest
 from fastapi.testclient import TestClient
 
 import db
 import main
-from rules.engine import INDICATORS, evaluate
-
-
-@pytest.mark.parametrize("ind,value,status", [
-    ("bp_systolic", 119, "green"), ("bp_systolic", 120, "amber"), ("bp_systolic", 139, "amber"),
-    ("bp_systolic", 140, "red"), ("bp_systolic", 180, "red"), ("bp_diastolic", 79, "green"),
-    ("bp_diastolic", 80, "amber"), ("bp_diastolic", 90, "red"),
-    ("glucose_fasting", 53, "red"), ("glucose_fasting", 54, "amber"), ("glucose_fasting", 70, "green"),
-    ("glucose_fasting", 99, "green"), ("glucose_fasting", 100, "amber"), ("glucose_fasting", 126, "red"),
-    ("sleep_hours", 4.9, "red"), ("sleep_hours", 5, "amber"), ("sleep_hours", 6, "green"),
-    ("heart_rate", 59, "amber"), ("heart_rate", 100, "green"), ("heart_rate", 101, "amber"),
-    ("body_temp", 37.9, "green"), ("body_temp", 38.0, "red"),
-    ("spo2", 97, None), ("mood", 3, None),
-])
-def test_bands(ind, value, status):
-    assert evaluate(ind, value)["status"] == status
-
-
-def test_escalation_only_at_severe():
-    assert not evaluate("bp_systolic", 180)["escalate"]
-    assert evaluate("bp_systolic", 181)["escalate"] and evaluate("bp_diastolic", 121)["escalate"]
-    assert evaluate("glucose_fasting", 53)["escalate"]
-
-
-def test_every_band_is_cited():
-    for spec in INDICATORS.values():
-        for band in spec.get("bands", []):
-            assert band["source_title"] and band["source_url"].startswith("https://")
-        if "bands" not in spec:
-            assert spec["value"] is None and spec["todo"]
-
-
-def test_wording_rules():
-    text = json.dumps(INDICATORS).lower()
-    for banned in ("diagnose", "you have", "treatment"):
-        assert banned not in text
 
 
 @pytest.fixture
@@ -65,13 +29,20 @@ def test_validation(client):
 
 def test_log_then_status(client):
     r = post(client, ("heart_rate", 64, "oximeter"), ("spo2", 97, "oximeter"),
-             ("bp_systolic", 142, "manual"), ("bp_diastolic", 78, "manual"), ("sleep_hours", 5.5, "manual"))
+             ("bp_systolic", 185, "manual"), ("bp_diastolic", 78, "manual"), ("sleep_hours", 5.5, "manual"))
     assert r.status_code == 200 and r.json()["saved"] == 5
     s = {x["indicator"]: x for x in client.get("/status/c1").json()}
+
+    sys_ = s["bp_systolic"]
+    assert (sys_["status"], sys_["escalate_to_flight_surgeon"], sys_["unit"]) == ("red", True, "mmHg")
+    assert sys_["guidance"] and sys_["source_title"] and sys_["source_url"]
+    assert s["sleep_hours"]["status"] == "amber" and not s["sleep_hours"]["escalate_to_flight_surgeon"]
+    assert s["spo2"]["status"] is None and s["spo2"]["source_url"] is None and s["spo2"]["value"] == 97  # no cited threshold
     assert s["heart_rate"]["status"] == "green" and s["heart_rate"]["source"] == "oximeter"
-    assert s["bp_systolic"]["status"] == "red" and s["bp_systolic"]["unit"] == "mmHg"
-    assert s["sleep_hours"]["status"] == "amber" and s["sleep_hours"]["source_url"]
-    assert s["spo2"]["status"] is None and s["spo2"]["value"] == 97
 
     post(client, ("heart_rate", 105, "manual"))
     assert {x["indicator"]: x for x in client.get("/status/c1").json()}["heart_rate"]["value"] == 105
+
+
+def test_status_unknown_crew_is_empty(client):
+    assert client.get("/status/nobody").json() == []
