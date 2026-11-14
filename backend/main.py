@@ -239,7 +239,12 @@ def list_environment(days: int = Query(30, ge=1, le=365)):
     latest = [{"indicator": ind, "label": spec["label"], "unit": spec["unit"], "value": last[ind]["v"], "ts": last[ind]["ts"],
                **engine.evaluate(ind, last[ind]["v"])}
               for ind, spec in engine.ENVIRONMENT.items() if last[ind]]
-    return {"days": days, "latest": latest, "series": env_series(rows)}
+    # Table: newest first, each cell with its status (None when thresholds.json has no cited band).
+    table = [{"id": r["id"], "ts": r["ts"],
+              **{ind: None if r[ind] is None else {"value": r[ind], "status": engine.evaluate(ind, r[ind])["status"]}
+                 for ind in engine.ENVIRONMENT}}
+             for r in reversed(rows[-50:])]  # ponytail: last 50 entries; paginate if crews log more often than that
+    return {"days": days, "latest": latest, "series": env_series(rows), "rows": table}
 
 
 @app.post("/symptoms")

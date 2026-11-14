@@ -50,7 +50,7 @@ def snapshot(now):
     c = TestClient(main.app)
     get = lambda path: c.get(path).raise_for_status().json()  # noqa: E731
     env = get(f"/environment?days={DAYS}")
-    for x in env["latest"] + [p for s in env["series"] for p in s["points"]]:
+    for x in env["latest"] + env["rows"] + [p for s in env["series"] for p in s["points"]]:
         x["source"] = "simulated"  # the environment table has no source column
     return {
         "exported_at": now.isoformat(),

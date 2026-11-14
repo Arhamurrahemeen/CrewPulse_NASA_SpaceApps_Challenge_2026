@@ -38,7 +38,10 @@ export function demoApi(path, options) {
   const [, route, crew] = url.pathname.split('/').map(decodeURIComponent)
   if (route === 'status') return status[crew] ?? []
   if (route === 'trends') return { days, indicators: lastDays(trends[crew] ?? [], days) }
-  if (route === 'environment') return { ...environment, days, series: lastDays(environment.series, days) }
+  if (route === 'environment') {
+    const since = Date.now() - days * DAY
+    return { ...environment, days, series: lastDays(environment.series, days), rows: environment.rows.filter((r) => Date.parse(r.ts) >= since) }
+  }
   if (route === 'radiation') return radiation(Number(url.searchParams.get('mission_days')) || 90)
   throw new Error(`Demo mode: ${url.pathname} is not in the snapshot.`)
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, ENVIRONMENT } from '../api.js'
 import StatusCard from '../components/StatusCard.jsx'
 import TrendChart from '../components/TrendChart.jsx'
+import SimulatedBadge from '../components/SimulatedBadge.jsx'
 
 // ppm is a volume fraction; partial pressure = fraction x total pressure. ASSUMPTION: 1 atm (760 mmHg) cabin,
 // the ISS nominal. A lower-pressure habitat gives a lower ppCO2 for the same ppm.
@@ -19,9 +20,36 @@ function Field({ id, value, onChange, step, children }) {
   )
 }
 
+// Cells are coloured only when thresholds.json has cited bands for that parameter (status is null otherwise).
+function EnvTable({ rows }) {
+  const ids = Object.keys(ENVIRONMENT)
+  return (
+    <div className="table-wrap">
+      <table className="env-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            {ids.map((id) => <th key={id}>{ENVIRONMENT[id].label} ({ENVIRONMENT[id].unit})</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td>{new Date(r.ts).toLocaleString()} {r.source === 'simulated' && <SimulatedBadge />}</td>
+              {ids.map((id) => (
+                <td key={id} className={r[id]?.status ?? ''}>{r[id] ? r[id].value : '–'}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function Environment() {
   const [values, setValues] = useState({})
-  const [co2Unit, setCo2Unit] = useState('mmHg')
+  const [co2Unit, setCo2Unit] = useState('ppm') // most cabin/handheld CO₂ meters read ppm; stored as mmHg (the unit of the NASA limit)
   const [msg, setMsg] = useState(null)
   const [data, setData] = useState(null)
   const [days, setDays] = useState(30)
@@ -58,8 +86,8 @@ export default function Environment() {
         <p className="muted">Log what the cabin displays show; empty fields are skipped. Shared by the whole crew.</p>
         <Field id="co2_mmhg" value={values.co2_mmhg} onChange={set} step={co2Unit === 'ppm' ? 1 : 0.1}>
           <select value={co2Unit} onChange={(e) => setCo2Unit(e.target.value)} aria-label="CO₂ unit">
-            <option>mmHg</option>
             <option>ppm</option>
+            <option>mmHg</option>
           </select>
           {co2Unit === 'ppm' && co2Mmhg != null && (
             <small className="muted">≈ {co2Mmhg} mmHg at a 1 atm (760 mmHg) cabin</small>
@@ -79,6 +107,9 @@ export default function Environment() {
       </p>
       <div className="grid">{data?.latest.map((x) => <StatusCard key={x.indicator} source="manual" {...x} />)}</div>
 
+      <h2>Recent entries</h2>
+      {data?.rows.length > 0 && <EnvTable rows={data.rows} />}
+
       <h2>Trends</h2>
       <div className="toggle-group" role="group" aria-label="Time range">
         {[7, 30, 90].map((d) => (
@@ -88,7 +119,7 @@ export default function Environment() {
         ))}
       </div>
       {data?.series.length === 0 && <p className="muted">No cabin readings in the last {days} days.</p>}
-      <div className="trend-grid">{data?.series.map((s) => <TrendChart key={s.indicator} series={s} days={days} />)}</div>
+      <div className="trend-grid">{data?.series.map((s) => <TrendChart key={s.indicator} series={s} days={days} height={120} />)}</div>
     </section>
   )
 }

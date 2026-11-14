@@ -81,3 +81,22 @@ main { padding: 1rem; }
 .credit a { color: var(--muted); }
 
 .demo-banner { margin: 0; padding: 0.5rem 1rem; background: var(--amber); color: #0f1419; font-weight: 600; }
+
+.with-aside { display: grid; grid-template-columns: 1fr 15rem; gap: 1rem; align-items: start; }
+@media (max-width: 48rem) { .with-aside { grid-template-columns: 1fr; } }
+.cabin { margin-top: 1rem; }
+.cabin h2 { font-size: 1rem; margin: 0 0 0.5rem; display: flex; justify-content: space-between; }
+.cabin h2 a { font-size: 0.85rem; font-weight: 400; }
+.cabin ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.cabin li { display: grid; border-left: 4px solid var(--muted); padding-left: 0.6rem; }
+.cabin li strong { font-size: 1.4rem; }
+.cabin li.green { border-left-color: var(--green); }
+.cabin li.amber { border-left-color: var(--amber); }
+.cabin li.red { border-left-color: var(--red); }
+.table-wrap { overflow-x: auto; max-height: 22rem; }
+.env-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.env-table th, .env-table td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid #2a3139; white-space: nowrap; }
+.env-table th { position: sticky; top: 0; background: var(--bg, #0f1419); color: var(--muted); font-weight: 600; }
+.env-table td.green { border-left: 4px solid var(--green); }
+.env-table td.amber { border-left: 4px solid var(--amber); }
+.env-table td.red { border-left: 4px solid var(--red); }

@@ -69,13 +69,26 @@ def test_post_and_get(client):
     series = {s["indicator"]: s for s in body["series"]}
     assert len(series["temp_c"]["points"]) == 2 and len(series["co2_mmhg"]["points"]) == 1
     assert series["temp_c"]["unit"] == "°C" and series["temp_c"]["bands"][0]["status"] == "red"
+    newest, older = body["rows"]
+    assert newest["temp_c"] == {"value": 26, "status": "amber"} and newest["co2_mmhg"] is None
+    assert older["humidity_pct"] == {"value": 45, "status": "green"}
+
+
+def test_uncited_parameter_has_no_colour(client, monkeypatch):
+    """A parameter without cited bands in thresholds.json is shown, but never coloured."""
+    import rules.engine as eng
+    monkeypatch.setitem(eng.SPECS, "humidity_pct", {k: v for k, v in eng.ENVIRONMENT["humidity_pct"].items() if k != "bands"})
+    client.post("/environment", json={"humidity_pct": 90})
+    body = client.get("/environment").json()
+    assert body["latest"][0]["status"] is None and body["latest"][0]["source_url"] is None
+    assert body["rows"][0]["humidity_pct"] == {"value": 90, "status": None}
 
 
 def test_validation(client):
     assert client.post("/environment", json={}).status_code == 422
     r = client.post("/environment", json={"humidity_pct": 120, "co2_mmhg": -1})
     assert r.status_code == 422 and len(r.json()["detail"]) == 2
-    assert client.get("/environment").json() == {"days": 30, "latest": [], "series": []}
+    assert client.get("/environment").json() == {"days": 30, "latest": [], "series": [], "rows": []}
 
 
 def test_old_ppm_column_migrated(tmp_path):

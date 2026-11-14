@@ -31,7 +31,7 @@ function Tip({ active, payload, unit }) {
   )
 }
 
-export default function TrendChart({ series, days }) {
+export default function TrendChart({ series, days, height = 180 }) {
   const { label, unit, bands, points, source_title, source_url } = series
   const data = points.map((p) => ({ t: Date.parse(p.ts), value: p.value, source: p.source }))
   const now = Date.now()
@@ -49,7 +49,7 @@ export default function TrendChart({ series, days }) {
       <figcaption>
         <strong>{label}</strong> <span className="muted">({unit}, last {days} days)</span> {hasSim && <SimulatedBadge />}
       </figcaption>
-      <ResponsiveContainer width="100%" height={180}>
+      <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
           {bands.map((b) => (
             <ReferenceArea key={b.from} y1={b.from} y2={b.to} fill={BAND_FILL[b.status]} fillOpacity={0.18} ifOverflow="hidden" />

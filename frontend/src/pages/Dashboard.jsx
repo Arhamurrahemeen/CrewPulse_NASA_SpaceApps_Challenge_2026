@@ -27,6 +27,33 @@ function mergeStressHrv(items) {
 
 const RANGES = [7, 30, 90]
 
+// Latest cabin values next to the health cards; colour only where thresholds.json cites bands.
+function CabinPanel({ reload }) {
+  const [latest, setLatest] = useState(null)
+  useEffect(() => {
+    api('/environment?days=1').then((d) => setLatest(d.latest), () => setLatest(null))
+  }, [reload])
+  return (
+    <aside className="cabin card">
+      <h2>
+        Cabin <a href="#Environment">log</a>
+      </h2>
+      {!latest?.length && <p className="muted">No cabin readings yet.</p>}
+      <ul>
+        {latest?.map((x) => (
+          <li key={x.indicator} className={x.status ?? ''} title={x.band}>
+            <span>{x.label}</span>
+            <strong>
+              {x.value} <small className="unit">{x.unit}</small>
+            </strong>
+            <small className="muted">{new Date(x.ts).toLocaleString()}{x.source === 'simulated' ? ' · simulated' : ''}</small>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  )
+}
+
 // One chart per indicator with readings in the chosen window. `reload` changes on every Refresh.
 function Trends({ crew, reload }) {
   const [days, setDays] = useState(30)
@@ -86,7 +113,10 @@ export default function Dashboard() {
       <button onClick={load}>Refresh</button>
       {error && <div className="card warn">{error}</div>}
       {items?.length === 0 && <p>No readings yet. Log some on the Log page or run a check-in.</p>}
-      <div className="grid">{items?.map((x) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} /> : <StatusCard key={x.indicator} {...x} />))}</div>
+      <div className="with-aside">
+        <div className="grid">{items?.map((x) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} /> : <StatusCard key={x.indicator} {...x} />))}</div>
+        <CabinPanel reload={loaded.n} />
+      </div>
       <Trends crew={loaded.crew} reload={loaded.n} />
     </section>
   )
