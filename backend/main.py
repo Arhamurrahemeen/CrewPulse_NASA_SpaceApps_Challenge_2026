@@ -97,14 +97,46 @@ def checkin(crew_id: str):
         raise HTTPException(503, str(e))
     if not result["accepted"]:
         return {**result, "bpm": None, "message": "Signal too weak. Please re-scan: stay still, face the light."}
+    ts = now()
     conn = db.connect()
     with conn:
         conn.execute(
             "INSERT INTO reading (crew_id, ts, indicator, value, unit, source, quality) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (crew_id, now(), "heart_rate", result["bpm"], "bpm", "camera", result["quality_db"]),
+            (crew_id, ts, "heart_rate", result["bpm"], "bpm", "camera", result["quality_db"]),
         )
     conn.close()
-    return result
+    return {**result, "ts": ts}
+
+
+class OximeterPair(BaseModel):
+    crew_id: str
+    camera_ts: str
+    bpm: float
+
+
+@app.post("/checkin/oximeter")
+def checkin_oximeter(body: OximeterPair):
+    """Oximeter HR read at the end of a camera scan, stored with the scan's timestamp so tools/validate.py pairs them exactly."""
+    try:
+        engine.check_value("heart_rate", body.bpm)
+    except ValueError as e:
+        raise HTTPException(422, [str(e)])
+    conn = db.connect()
+    sources = {r[0] for r in conn.execute(
+        "SELECT source FROM reading WHERE crew_id = ? AND ts = ? AND indicator = 'heart_rate'", (body.crew_id, body.camera_ts))}
+    if "camera" not in sources:
+        conn.close()
+        raise HTTPException(404, "No camera scan with that timestamp")
+    if "oximeter" in sources:
+        conn.close()
+        raise HTTPException(409, "This scan already has an oximeter value")
+    with conn:
+        conn.execute(
+            "INSERT INTO reading (crew_id, ts, indicator, value, unit, source) VALUES (?, ?, 'heart_rate', ?, 'bpm', 'oximeter')",
+            (body.crew_id, body.camera_ts, body.bpm),
+        )
+    conn.close()
+    return {"saved": 1, "ts": body.camera_ts}
 
 
 @app.get("/status/{crew_id}")

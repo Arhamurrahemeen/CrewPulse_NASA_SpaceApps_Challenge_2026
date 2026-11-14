@@ -6,3 +6,4 @@ scipy==1.17.1
 opencv-python==4.13.0.92
 mediapipe==0.10.32
 pytest
+matplotlib==3.11.2  # tools/validate.py Bland-Altman plot

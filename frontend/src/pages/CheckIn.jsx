@@ -1,5 +1,38 @@
 import { useState } from 'react'
-import { api } from '../api.js'
+import { api, INDICATORS } from '../api.js'
+
+const [HR_MIN, HR_MAX] = INDICATORS.heart_rate.limits
+
+// Oximeter HR read when the scan ends, saved with the scan's timestamp -> exact pair for tools/validate.py.
+function OximeterPair({ crew, cameraTs }) {
+  const [bpm, setBpm] = useState('')
+  const [msg, setMsg] = useState(null)
+
+  async function save(e) {
+    e.preventDefault()
+    try {
+      await api('/checkin/oximeter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crew_id: crew, camera_ts: cameraTs, bpm: Number(bpm) }),
+      })
+      setMsg({ ok: `Oximeter ${bpm} bpm saved with this scan.` })
+    } catch (err) {
+      setMsg({ error: err.message })
+    }
+  }
+
+  if (msg?.ok) return <div className="muted">{msg.ok}</div>
+  return (
+    <form className="field" onSubmit={save}>
+      <span>Oximeter HR at end of scan</span>
+      <input type="number" min={HR_MIN} max={HR_MAX} step={1} required value={bpm} onChange={(e) => setBpm(e.target.value)} />
+      <span className="unit">bpm</span>
+      <button type="submit">Save pair</button>
+      {msg?.error && <div className="card warn">{msg.error}</div>}
+    </form>
+  )
+}
 
 export default function CheckIn() {
   const [crew, setCrew] = useState('c1')
@@ -23,7 +56,8 @@ export default function CheckIn() {
       <h1>Camera check-in</h1>
       <p className="muted">
         Face the camera in even light and keep still. The camera starts, then scans for 30 s. Heart rate only.
-        Press q in the camera window to cancel.
+        Press q in the camera window to cancel. Wearing a pulse oximeter? Note its heart rate when the scan
+        ends and save it below the result — those pairs measure how accurate the camera is.
       </p>
       <label>
         Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} disabled={state === 'scanning'} />
@@ -38,6 +72,7 @@ export default function CheckIn() {
           <div className="muted">
             Signal quality {result.quality_db} dB · {result.fps_measured} fps · saved as camera reading
           </div>
+          <OximeterPair key={result.ts} crew={crew} cameraTs={result.ts} />
         </div>
       )}
       {state === 'done' && !result.accepted && (

@@ -19,3 +19,4 @@ cache/
 # Downloaded models (see README)
 backend/rppg/models/
 .pytest_tmp/
+tools/bland_altman.png

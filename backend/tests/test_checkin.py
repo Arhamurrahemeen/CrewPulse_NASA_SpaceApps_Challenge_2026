@@ -73,3 +73,25 @@ def test_checkin_endpoint(tmp_path, monkeypatch):
     rows = conn.execute("SELECT indicator, unit, source FROM reading").fetchall()
     conn.close()
     assert [tuple(x) for x in rows] == [("heart_rate", "bpm", "camera")]
+
+
+def test_oximeter_pair(tmp_path, monkeypatch):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+    import validate
+
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.db")
+    monkeypatch.setattr(main.rppg_checkin, "scan", lambda: analyze(synthetic_rgb(72), 30.0))
+    c = TestClient(main.app)
+    scan = c.post("/checkin", params={"crew_id": "c1"}).json()
+
+    pair = lambda bpm, ts=scan["ts"]: c.post("/checkin/oximeter", json={"crew_id": "c1", "camera_ts": ts, "bpm": bpm})
+    assert pair(300).status_code == 422
+    assert pair(73, ts="2000-01-01T00:00:00+00:00").status_code == 404
+    assert pair(73).status_code == 200
+    assert pair(74).status_code == 409  # one oximeter value per scan
+
+    cam, oxi = validate.load(tmp_path / "t.db", "c1")
+    assert validate.pair(cam, oxi, window_s=0) == [(scan["bpm"], 73.0, scan["quality_db"])]  # exact, dt = 0
