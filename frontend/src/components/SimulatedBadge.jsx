@@ -1,4 +1,3 @@
-// TODO
 export default function SimulatedBadge() {
-  return null
+  return <span className="badge sim">Simulated</span>
 }

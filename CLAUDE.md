@@ -17,6 +17,10 @@ An **offline-first** dashboard that lets an astronaut assess their own health:
 7. Environment log (CO₂ ppm, cabin °C, humidity %) recorded alongside health data.
 Stretch, in this order: interactive body map (tap part → log symptom), reminders, streak/gamification, multi-crew view.
 
+## How to work with the user
+- **Rely heavily on web search.** Verify facts, thresholds, library APIs and versions against primary sources (guidelines, papers, official docs) before using them; cite what you used. If a page blocks fetching, use Claude in Chrome.
+- **Don't just agree.** When the user's request is wrong, risky or there is a better approach, say so plainly, explain why with evidence, and propose the better option before (or while) building.
+
 ## Hard rules
 - **Offline by design.** No feature may require the internet at runtime. No cloud LLM calls. DONKI is fetched when online and served from disk cache otherwise.
 - **No ML training.** Rules + statistics only. Do not add model training code.

@@ -1,3 +1,88 @@
 {
-  "indicators": []
+  "_comment": "bands: checked in order, first with value < below wins; a band without 'below' catches the rest. limits = physically plausible input range for validation, NOT a medical threshold.",
+  "indicators": {
+    "heart_rate": {
+      "label": "Heart rate", "unit": "bpm", "limits": [20, 250], "integer": true,
+      "bands": [
+        {"below": 60, "status": "amber", "label": "Below 60", "guidance": "Below the typical resting range. Common in fit people; consider a re-check at rest and watch your baseline trend.",
+         "source_title": "American Heart Association, All About Heart Rate", "source_url": "https://www.heart.org/en/health-topics/high-blood-pressure/the-facts-about-high-blood-pressure/all-about-heart-rate-pulse"},
+        {"below": 101, "status": "green", "label": "60-100 resting", "guidance": "Within the typical resting range.",
+         "source_title": "American Heart Association, All About Heart Rate", "source_url": "https://www.heart.org/en/health-topics/high-blood-pressure/the-facts-about-high-blood-pressure/all-about-heart-rate-pulse"},
+        {"status": "amber", "label": "Above 100", "guidance": "Above the typical resting range. Rest calmly and re-check; if it stays high, consider contacting flight surgeons.",
+         "source_title": "American Heart Association, All About Heart Rate", "source_url": "https://www.heart.org/en/health-topics/high-blood-pressure/the-facts-about-high-blood-pressure/all-about-heart-rate-pulse"}
+      ]
+    },
+    "bp_systolic": {
+      "label": "BP systolic", "unit": "mmHg", "limits": [50, 260], "integer": true,
+      "bands": [
+        {"below": 120, "status": "green", "label": "Normal", "guidance": "Systolic in the normal range.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"below": 130, "status": "amber", "label": "Elevated", "guidance": "Elevated. Categories are based on an average of 2+ readings on 2+ occasions; keep monitoring.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"below": 140, "status": "amber", "label": "Stage 1 range", "guidance": "In the stage 1 range. Re-check seated and rested; categories need repeated readings.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"below": 181, "status": "red", "label": "Stage 2 range", "guidance": "In the stage 2 range. Re-check; if repeated readings stay here, contact flight surgeons.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"status": "red", "label": "Severe range (>180)", "escalate": true, "guidance": "Severe range. Contact flight surgeons now, especially with chest pain, breathlessness, weakness or vision changes.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"}
+      ]
+    },
+    "bp_diastolic": {
+      "label": "BP diastolic", "unit": "mmHg", "limits": [20, 160], "integer": true,
+      "bands": [
+        {"below": 80, "status": "green", "label": "Normal", "guidance": "Diastolic in the normal range.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"below": 90, "status": "amber", "label": "Stage 1 range", "guidance": "In the stage 1 range. Re-check seated and rested; categories need repeated readings.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"below": 121, "status": "red", "label": "Stage 2 range", "guidance": "In the stage 2 range. Re-check; if repeated readings stay here, contact flight surgeons.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"},
+        {"status": "red", "label": "Severe range (>120)", "escalate": true, "guidance": "Severe range. Contact flight surgeons now, especially with chest pain, breathlessness, weakness or vision changes.",
+         "source_title": "2025 AHA/ACC High Blood Pressure Guideline", "source_url": "https://doi.org/10.1161/CIR.0000000000001356"}
+      ]
+    },
+    "glucose_fasting": {
+      "label": "Fasting glucose", "unit": "mg/dL", "limits": [20, 600],
+      "bands": [
+        {"below": 54, "status": "red", "label": "Level 2 low (<54)", "escalate": true, "guidance": "Level 2 low glucose range. Take fast-acting glucose and contact flight surgeons.",
+         "source_title": "ADA Standards of Care 2026, Sec. 6, Table 6.4", "source_url": "https://doi.org/10.2337/dc26-S006"},
+        {"below": 70, "status": "amber", "label": "Level 1 low (54-69)", "guidance": "Level 1 low glucose range. Consider fast-acting carbohydrate and re-check in 15 min.",
+         "source_title": "ADA Standards of Care 2026, Sec. 6, Table 6.4", "source_url": "https://doi.org/10.2337/dc26-S006"},
+        {"below": 100, "status": "green", "label": "70-99 fasting", "guidance": "Fasting value below the impaired-fasting range.",
+         "source_title": "ADA Standards of Care 2026, Sec. 2", "source_url": "https://doi.org/10.2337/dc26-S002"},
+        {"below": 126, "status": "amber", "label": "100-125 fasting", "guidance": "In the impaired-fasting range (lab criteria, 8 h fast). Keep monitoring; a meter reading is less precise than a lab test.",
+         "source_title": "ADA Standards of Care 2026, Sec. 2", "source_url": "https://doi.org/10.2337/dc26-S002"},
+        {"status": "red", "label": "126+ fasting", "guidance": "At or above the fasting diabetes criterion (which needs lab confirmation). Contact flight surgeons to arrange a check.",
+         "source_title": "ADA Standards of Care 2026, Sec. 2", "source_url": "https://doi.org/10.2337/dc26-S002"}
+      ]
+    },
+    "body_temp": {
+      "label": "Body temperature", "unit": "°C", "limits": [30, 43],
+      "bands": [
+        {"below": 38, "status": "green", "label": "Below 38 °C", "guidance": "Below the fever threshold.",
+         "source_title": "CDC, Definitions of Signs, Symptoms, and Conditions of Ill Travelers", "source_url": "https://www.cdc.gov/quarantine/maritime/definitions-signs-symptoms-conditions-ill-travelers.html"},
+        {"status": "red", "label": "Fever (38 °C+)", "guidance": "At or above the fever threshold. Rest, hydrate, re-check, and contact flight surgeons.",
+         "source_title": "CDC, Definitions of Signs, Symptoms, and Conditions of Ill Travelers", "source_url": "https://www.cdc.gov/quarantine/maritime/definitions-signs-symptoms-conditions-ill-travelers.html"}
+      ],
+      "todo": "low-temperature threshold: look up in NASA-STD-3001"
+    },
+    "spo2": {
+      "label": "SpO₂", "unit": "%", "limits": [50, 100], "integer": true,
+      "value": null, "todo": "look up in NASA-STD-3001 (Vol 2 only specifies cabin ppO2, not crew SpO2)"
+    },
+    "sleep_hours": {
+      "label": "Sleep", "unit": "h", "limits": [0, 24],
+      "bands": [
+        {"below": 5, "status": "red", "label": "Under 5 h", "guidance": "Under 5 h is associated with worse somatic state in astronauts. Prioritise rest; if it repeats, contact flight surgeons.",
+         "source_title": "Jones et al., SLEEP 2022, 45(3)", "source_url": "https://doi.org/10.1093/sleep/zsac006"},
+        {"below": 6, "status": "amber", "label": "5-6 h", "guidance": "Under 6 h is associated with slower psychomotor response in astronauts. Consider extra rest before critical tasks.",
+         "source_title": "Jones et al., SLEEP 2022, 45(3)", "source_url": "https://doi.org/10.1093/sleep/zsac006"},
+        {"status": "green", "label": "6 h+", "guidance": "At or above 6 h.",
+         "source_title": "Jones et al., SLEEP 2022, 45(3)", "source_url": "https://doi.org/10.1093/sleep/zsac006"}
+      ]
+    },
+    "mood": {
+      "label": "Mood", "unit": "/5", "limits": [1, 5], "integer": true,
+      "value": null, "todo": "look up in NASA OCHMO TB-016 behavioural health"
+    }
+  }
 }

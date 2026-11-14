@@ -1,6 +1,5 @@
 import { useState } from 'react'
-
-const API = 'http://localhost:8000'
+import { api } from '../api.js'
 
 export default function CheckIn() {
   const [crew, setCrew] = useState('c1')
@@ -11,13 +10,10 @@ export default function CheckIn() {
     setState('scanning')
     setResult(null)
     try {
-      const res = await fetch(`${API}/checkin?crew_id=${encodeURIComponent(crew)}`, { method: 'POST' })
-      const body = await res.json()
-      if (!res.ok) throw new Error(body.detail ?? `HTTP ${res.status}`)
-      setResult(body)
+      setResult(await api(`/checkin?crew_id=${encodeURIComponent(crew)}`, { method: 'POST' }))
       setState('done')
     } catch (e) {
-      setResult({ error: e.message === 'Failed to fetch' ? 'Backend not reachable on localhost:8000.' : e.message })
+      setResult({ error: e.message })
       setState('error')
     }
   }
