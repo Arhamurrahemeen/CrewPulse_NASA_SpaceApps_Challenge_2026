@@ -36,7 +36,8 @@ def analyze(rgb, fps):
     return {"bpm": float(bpm), "quality_db": float(quality_db), "fps_measured": round(float(fps), 1), "accepted": accepted}
 
 
-MAX_GAP_S = 0.5  # longer than this without a face frame = the trace is broken, ask for a re-scan
+MAX_GAP_S = 0.5  # a longer gap without a sample splits the trace
+MIN_SEGMENT_S = 20.0  # the longest gap-free stretch must last at least this long (rPPG windows are usually 20-30 s)
 
 
 def analyze_trace(rgb, t_ms):
@@ -54,18 +55,21 @@ def analyze_trace(rgb, t_ms):
         raise ValueError("trace contains non-numeric values")
     order = np.argsort(t)
     t, rgb = t[order] - t[order][0], rgb[order]
-    span = t[-1]
+    gaps = np.diff(t)
+    max_gap = float(np.max(gaps))
+    # One stall (camera hiccup, a blink of the tracker) should not void the whole scan: analyse the longest
+    # stretch with no gap above MAX_GAP_S, if it is long enough. The same fps and quality gates apply to it.
+    cuts = np.flatnonzero(gaps > MAX_GAP_S) + 1
+    a, b = max(zip(np.r_[0, cuts], np.r_[cuts, len(t)]), key=lambda ab: t[ab[1] - 1] - t[ab[0]])
+    t, rgb = t[a:b] - t[a], rgb[a:b]
+    span = float(t[-1]) if len(t) > 1 else 0.0
     fps = (len(t) - 1) / span if span > 0 else 0.0
-    if fps <= 0:
-        return {"bpm": 0, "quality_db": 0.0, "fps_measured": 0.0, "accepted": False}
+    base = {"max_gap_s": round(max_gap, 2), "segment_s": round(span, 1)}
+    if fps <= 0 or span < MIN_SEGMENT_S:
+        return {"bpm": 0.0, "quality_db": 0.0, "fps_measured": round(fps, 1), "accepted": False, **base}
     grid = np.arange(int(span * fps) + 1) / fps
     even = np.column_stack([np.interp(grid, t, rgb[:, c]) for c in range(3)])
-    out = analyze(even, fps)
-    max_gap = float(np.max(np.diff(t)))
-    if max_gap > MAX_GAP_S:
-        out["accepted"] = False
-    out["max_gap_s"] = round(max_gap, 2)
-    return out
+    return {**analyze(even, fps), **base}
 
 
 PREVIEW_WINDOW = "CrewPulse check-in"

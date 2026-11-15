@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { api, DEMO } from '../api.js'
+import { api, DEMO, INDICATORS } from '../api.js'
 import StatusCard from '../components/StatusCard.jsx'
 import StressHrvCard from '../components/StressHrvCard.jsx'
 import TrendChart from '../components/TrendChart.jsx'
@@ -23,6 +23,26 @@ function mergeBp(items) {
 }
 
 // Self-reported stress and device HRV share one card (no combined score).
+// Everything a crew member can log, so indicators with no reading yet still get a card (and a way to log them).
+const GROUPS = [
+  { keys: ['heart_rate'], label: 'Heart rate', href: '#CheckIn', action: 'Camera check-in' },
+  { keys: ['bp_systolic', 'bp_diastolic'], label: 'Blood pressure' },
+  { keys: ['glucose_fasting'] }, { keys: ['body_temp'] }, { keys: ['spo2'] }, { keys: ['sleep_hours'] },
+  { keys: ['stress', 'hrv_rmssd'], label: 'Stress & HRV', note: 'Stress is a 0–10 self-report; HRV (RMSSD) comes from a chest-strap ECG or similar, never the camera.' },
+  { keys: ['mood'] },
+]
+
+function EmptyCard({ group, i }) {
+  return (
+    <article className="status-card none empty reveal" style={{ '--i': i }}>
+      <header><h2>{group.label ?? INDICATORS[group.keys[0]].label}</h2></header>
+      <div className="big muted">—</div>
+      <p className="muted">Not logged yet.{group.note ? ` ${group.note}` : ''}</p>
+      <a className="source" href={group.href ?? '#Log'}>{group.action ?? 'Log it'}</a>
+    </article>
+  )
+}
+
 function mergeStressHrv(items) {
   const parts = items.filter((x) => x.indicator === 'stress' || x.indicator === 'hrv_rmssd')
   if (!parts.length) return items
@@ -194,7 +214,12 @@ export default function Dashboard() {
         <button onClick={load}>Refresh</button>
         {items?.length === 0 && <p className="muted">No readings yet. Log some on the Log page or run a check-in.</p>}
         <div className="with-aside">
-          <div className="grid">{items?.map((x, i) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} i={i} /> : <StatusCard key={x.indicator} {...x} i={i} />))}</div>
+          <div className="grid">
+            {items?.map((x, i) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} i={i} /> : <StatusCard key={x.indicator} {...x} i={i} />))}
+            {raw && GROUPS.filter((g) => !g.keys.some((k) => raw.some((x) => x.indicator === k))).map((g, j) => (
+              <EmptyCard key={g.keys[0]} group={g} i={(items?.length ?? 0) + j} />
+            ))}
+          </div>
           <CabinPanel reload={loaded.n} />
         </div>
       </Section>

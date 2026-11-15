@@ -5,6 +5,54 @@ const [HR_MIN, HR_MAX] = INDICATORS.heart_rate.limits
 // Not bundled into the demo build: it needs the local backend for the face model and the analysis.
 const BrowserScan = import.meta.env.VITE_DEMO_MODE === 'true' ? null : lazy(() => import('../components/BrowserScan.jsx'))
 
+// Stress after a scan is a SELF-REPORT (0-10). The camera never estimates stress or HRV: 30 s of webcam video
+// cannot time beats finely enough for HRV, and HRV is not a validated stress measure (CLAUDE.md hard rule).
+function StressPrompt({ crew }) {
+  const [value, setValue] = useState(null)
+  const [saved, setSaved] = useState(null)
+  const [err, setErr] = useState(null)
+
+  async function save() {
+    try {
+      await api('/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ crew_id: crew, readings: [{ indicator: 'stress', value }] }) })
+      const st = (await api(`/status/${encodeURIComponent(crew)}`)).find((x) => x.indicator === 'stress')
+      setSaved({ value, b: st?.baseline })
+    } catch (e) {
+      setErr(e.message)
+    }
+  }
+
+  if (saved) {
+    const b = saved.b
+    return (
+      <div className="stress-saved">
+        <div className="mono muted">Stress · self-report</div>
+        <div className="big">{saved.value} <span>/10</span></div>
+        <div className="muted mono">
+          {b?.ready ? `Your 28-day usual: ${b.mean} ± ${b.sd}` : `Building your stress baseline: ${b?.n_days ?? 1}/${b?.min_days ?? 7} days`}
+          {b?.reasons?.length ? ` · ${b.reasons[0]}` : ''}
+        </div>
+        <p className="muted">No cited threshold, so no colour. If stress stays high for you, consider talking to flight surgeons. <a href="#Dashboard">See it on the Dashboard</a></p>
+      </div>
+    )
+  }
+  return (
+    <fieldset className="row stress-prompt">
+      <legend>How stressed do you feel right now?</legend>
+      {Array.from({ length: 11 }, (_, n) => (
+        <label key={n} className="mood">
+          <input type="radio" name="stress-now" checked={value === n} onChange={() => setValue(n)} />
+          {n}
+        </label>
+      ))}
+      <span className="unit">0 = not at all, 10 = extremely</span>
+      <button type="button" onClick={save} disabled={value === null}>Save stress</button>
+      {err && <div className="card warn">{err}</div>}
+      <small className="muted">Self-reported on purpose: a camera can't measure stress reliably.</small>
+    </fieldset>
+  )
+}
+
 // Oximeter HR read when the scan ends, saved with the scan's timestamp -> exact pair for tools/validate.py.
 function OximeterPair({ crew, cameraTs }) {
   const [bpm, setBpm] = useState('')
@@ -144,12 +192,14 @@ export default function CheckIn() {
             Signal quality {result.quality_db} dB · {result.fps_measured} fps · saved as camera reading
           </div>
           <OximeterPair key={result.ts} crew={crew} cameraTs={result.ts} />
+          <StressPrompt key={`s${result.ts}`} crew={crew} />
         </div>
       )}
       {state === 'done' && !result.accepted && (
         <div className="card warn">
           {result.message}
           {!result.cancelled && <div className="muted">Quality {result.quality_db} dB · {result.fps_measured} fps</div>}
+          {!result.cancelled && <StressPrompt key={`sr${result.fps_measured}${result.quality_db}`} crew={crew} />}
         </div>
       )}
       {state === 'error' && <div className="card warn">Check-in failed: {result.error}</div>}

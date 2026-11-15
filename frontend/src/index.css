@@ -323,3 +323,18 @@ legend { font-family: var(--fm); font-size: 0.7rem; letter-spacing: 0.08em; text
 .guide { list-style: none; padding: 0; margin: 0.6rem 0 1rem; display: grid; gap: 0.55rem; }
 .guide b { display: inline-block; min-width: 6.6rem; font-family: var(--fm); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
 .legend-row { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0.5rem 0 1rem; }
+
+.status-card.empty { border-style: dashed; background: transparent; }
+.status-card.empty .big { font-size: 2.6rem; }
+.status-card.empty .source::after { content: ' →'; }
+
+.stress-prompt { margin-top: 1rem; }
+.stress-prompt small { flex-basis: 100%; }
+.stress-saved { margin-top: 1rem; border-top: 1px solid var(--hair); padding-top: 0.8rem; }
+.stress-saved .big { font-size: 2.6rem; }
+
+/* scan mode: no decorative GPU work while the camera check-in runs */
+.scan-mode .backdrop, .scan-mode .gridlines { display: none; }
+.scan-mode *, .scan-mode *::before, .scan-mode *::after { backdrop-filter: none !important; animation-play-state: paused !important; }
+.scan-mode .scanner.live video { filter: none; }
+.scan-mode .scanner.live::after { display: none; }

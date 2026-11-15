@@ -130,8 +130,14 @@ def checkin_trace(body: TraceIn):
     except ValueError as e:
         raise HTTPException(422, str(e))
     if not result["accepted"]:
-        lost = result.get("max_gap_s", 0) > rppg_checkin.MAX_GAP_S
-        return {**result, "bpm": None, "message": "Your face was lost during the scan. Please re-scan and keep your face in the frame." if lost else RESCAN}
+        if result["segment_s"] < rppg_checkin.MIN_SEGMENT_S:
+            msg = (f"The scan was interrupted (no frames for {result['max_gap_s']} s), leaving under "
+                   f"{rppg_checkin.MIN_SEGMENT_S:.0f} s of steady signal. Please re-scan and keep still.")
+        elif result["fps_measured"] < rppg_checkin.MIN_FPS:
+            msg = f"The camera delivered only {result['fps_measured']} frames per second (25 needed). Add light and close other apps using the camera."
+        else:
+            msg = RESCAN
+        return {**result, "bpm": None, "message": msg}
     return {**result, "ts": store_camera(body.crew_id, result)}
 
 

@@ -119,10 +119,16 @@ def test_trace_jittered_29fps():
     assert abs(r["bpm"] - 72) <= 3 and r["accepted"] and 28 <= r["fps_measured"] <= 30
 
 
-def test_trace_face_lost_rejected():
+def test_trace_long_break_rejected():
     from rppg.checkin import analyze_trace
-    r = analyze_trace(*browser_trace(72, drop=(10000, 11500)))
-    assert not r["accepted"] and r["max_gap_s"] > 1
+    r = analyze_trace(*browser_trace(72, drop=(10000, 11500)))  # 10 s + 18.5 s stretches, both under 20 s
+    assert not r["accepted"] and r["max_gap_s"] > 1 and r["segment_s"] < 20
+
+
+def test_trace_one_stall_uses_longest_stretch():
+    from rppg.checkin import analyze_trace
+    r = analyze_trace(*browser_trace(72, drop=(3000, 4900)))  # a 1.9 s camera stall early in the scan
+    assert r["accepted"] and abs(r["bpm"] - 72) <= 3 and r["segment_s"] >= 24
 
 
 def test_trace_route_stores_and_validates(tmp_path, monkeypatch):
@@ -133,7 +139,8 @@ def test_trace_route_stores_and_validates(tmp_path, monkeypatch):
     assert r["accepted"] and abs(r["bpm"] - 66) <= 3 and r["ts"]
     stored = c.get("/readings", params={"crew_id": "c9"}).json()
     assert stored[0]["source"] == "camera" and stored[0]["quality"] == r["quality_db"]
-    lost = c.post("/checkin/trace", json={"crew_id": "c9", "rgb": browser_trace(drop=(5000, 7000))[0], "t_ms": browser_trace(drop=(5000, 7000))[1]}).json()
-    assert lost["bpm"] is None and "face was lost" in lost["message"]
+    rgb2, t2 = browser_trace(drop=(10000, 12000))
+    lost = c.post("/checkin/trace", json={"crew_id": "c9", "rgb": rgb2, "t_ms": t2}).json()
+    assert lost["bpm"] is None and "interrupted" in lost["message"]
     assert c.post("/checkin/trace", json={"crew_id": "c9", "rgb": [[1, 2]] * 5, "t_ms": [0, 1, 2, 3, 4]}).status_code == 422
     assert c.post("/checkin/trace", json={"crew_id": "c9", "rgb": [[1, 2, 3]] * 5, "t_ms": [0, 1, 2]}).status_code == 422
