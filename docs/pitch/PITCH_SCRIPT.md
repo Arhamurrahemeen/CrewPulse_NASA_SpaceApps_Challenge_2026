@@ -6,6 +6,8 @@ Deck: `CrewPulse-Pitch-Deck.pptx` (this folder) · 7 min talk + 3 min Q&A
 Swap any part you like, but decide before the slot and rehearse with a timer.
 At about 140 words a minute, each block below fits its time. Words in *italics* are stage directions.
 
+> This repo copy of the deck has the 7 judging slides. A local-only version, `CrewPulse Pitch Deck v4 (with video).pptx`, adds a 94 s screen-recording slide after slide 4 (about 1.5 min): use it instead of the live demo, or skip it if the judges hold to 7 slides.
+
 | Time | Slide | Speaker |
 |---|---|---|
 | 0:00–0:30 | 1 Title | Arham |
