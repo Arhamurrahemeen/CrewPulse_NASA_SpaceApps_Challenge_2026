@@ -70,8 +70,9 @@ export default function Log() {
 
   return (
     <form className="log" onSubmit={submit}>
-      <h1>Log readings</h1>
-      <p className="muted">Fill in what you measured; empty fields are skipped. Blood pressure needs both numbers.</p>
+      <div className="kicker"><b>03 · Log</b><span>manual entry</span><span>saved on this device</span></div>
+      <h1>Log what you measured.</h1>
+      <p className="lede">Empty fields are skipped. Blood pressure needs both numbers. Each value is checked against cited ranges after you save.</p>
       <label className="field">
         <span>Crew ID</span>
         <input value={crew} onChange={(e) => setCrew(e.target.value)} required />

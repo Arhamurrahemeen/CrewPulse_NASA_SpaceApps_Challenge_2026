@@ -4,9 +4,9 @@ import SourceLink from './SourceLink.jsx'
 import { ENVIRONMENT, INDICATORS } from '../api.js'
 
 // Same colours as the CSS tokens (SVG attributes get literal values).
-const BAND_FILL = { green: '#3fb950', amber: '#d29922', red: '#f85149' }
+const BAND_FILL = { green: '#3fb68b', amber: '#e8b23a', red: '#e5484d' }
 const LINE = '#5fb3f9'
-const SIM = '#9aa4ae'
+const SIM = '#8a8d93'
 const DAY_MS = 864e5
 
 const fmtDate = (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -16,7 +16,7 @@ function Dot({ cx, cy, payload }) {
   if (cx == null || cy == null) return null
   return payload.source === 'simulated'
     ? <circle cx={cx} cy={cy} r={3.5} fill="none" stroke={SIM} strokeWidth={1.5} />
-    : <circle cx={cx} cy={cy} r={3.5} fill={LINE} stroke="#0f1419" strokeWidth={1} />
+    : <circle cx={cx} cy={cy} r={3.5} fill={LINE} stroke="#0a0b0d" strokeWidth={1} />
 }
 
 function Tip({ active, payload, unit }) {
@@ -52,13 +52,13 @@ export default function TrendChart({ series, days, height = 180 }) {
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
           {bands.map((b) => (
-            <ReferenceArea key={b.from} y1={b.from} y2={b.to} fill={BAND_FILL[b.status]} fillOpacity={0.18} ifOverflow="hidden" />
+            <ReferenceArea key={b.from} y1={b.from} y2={b.to} fill={BAND_FILL[b.status]} fillOpacity={0.1} ifOverflow="hidden" />
           ))}
-          <CartesianGrid stroke="#2a3139" strokeDasharray="3 3" />
-          <XAxis dataKey="t" type="number" scale="time" domain={[now - days * DAY_MS, now]} tickFormatter={fmtDate} stroke="#9aa4ae" fontSize={11} />
-          <YAxis domain={yDomain} stroke="#9aa4ae" fontSize={11} width={40} allowDataOverflow />
+          <CartesianGrid stroke="#1e2126" strokeDasharray="2 4" />
+          <XAxis dataKey="t" type="number" scale="time" domain={[now - days * DAY_MS, now]} tickFormatter={fmtDate} stroke="#8a8d93" fontSize={10} />
+          <YAxis domain={yDomain} stroke="#8a8d93" fontSize={10} width={40} allowDataOverflow />
           <Tooltip content={<Tip unit={unit} />} />
-          <Line dataKey="value" stroke={LINE} strokeWidth={1.5} dot={<Dot />} activeDot={false} isAnimationActive={false} />
+          <Line dataKey="value" stroke={LINE} strokeWidth={1.6} dot={<Dot />} activeDot={false} isAnimationActive animationDuration={1200} animationEasing="ease-out" />
         </LineChart>
       </ResponsiveContainer>
       <div className="muted chart-note">

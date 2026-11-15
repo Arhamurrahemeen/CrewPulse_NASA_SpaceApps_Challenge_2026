@@ -1,10 +1,11 @@
 import { Baseline, UnusualBadge } from './StatusCard.jsx'
+import { CountUp } from './ui.jsx'
 
 // Stress (self-report) and HRV (device) side by side. Deliberately no combined "stress score":
 // there is no validated way to turn HRV into stress, and neither has a cited threshold (no colour).
-export default function StressHrvCard({ parts }) {
+export default function StressHrvCard({ parts, i = 0 }) {
   return (
-    <article className="status-card none">
+    <article className="status-card reveal none" style={{ '--i': i }}>
       <header>
         <h2>Stress &amp; HRV</h2>
         <span className="badges">
@@ -16,7 +17,7 @@ export default function StressHrvCard({ parts }) {
           <div key={p.indicator}>
             <div className="muted">{p.label}</div>
             <div className="big">
-              {p.value} <span>{p.unit}</span>
+              <CountUp value={p.value} /> <span>{p.unit}</span>
             </div>
             <div className="muted">
               {new Date(p.ts).toLocaleString()} · <span className="badge">{p.source}</span>

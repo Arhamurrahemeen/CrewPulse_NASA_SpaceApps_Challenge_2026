@@ -6,6 +6,7 @@
   <img alt="offline-first" src="https://img.shields.io/badge/offline-first-3FB950?style=flat-square&labelColor=16191E"/>
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-SQLite-0477AD?style=flat-square&logo=fastapi&logoColor=white&labelColor=16191E"/>
   <img alt="React" src="https://img.shields.io/badge/React-18%20%2B%20Vite-0477AD?style=flat-square&logo=react&logoColor=white&labelColor=16191E"/>
+  <img alt="three.js" src="https://img.shields.io/badge/3D-three.js%20%2B%20R3F-FF4F00?style=flat-square&logo=threedotjs&logoColor=white&labelColor=16191E"/>
   <img alt="tests" src="https://img.shields.io/badge/tests-132%20passing-3FB950?style=flat-square&labelColor=16191E"/>
   <img alt="not a medical device" src="https://img.shields.io/badge/not%20a-medical%20device-D29922?style=flat-square&labelColor=16191E"/>
   <img alt="OmniteX" src="https://img.shields.io/badge/by-OmniteX-F1F1EE?style=flat-square&labelColor=16191E"/>
@@ -35,23 +36,26 @@ So astronauts need to **check their own health, notice what has changed for them
 - **Radiation.** Solar flares, CMEs, storms and SEP events from NASA DONKI, cached for offline use, plus a mission dose clearly labelled **ESTIMATE**.
 - **Cabin environment.** CO₂, temperature and humidity against NASA-STD-3001 limits, shown next to your vitals.
 - **Body map.** Tap where it hurts to log a symptom (severity 1–5). Dots show the last 14 days.
-- **Offline by design.** No CDN, web fonts, analytics or cloud calls. Even the API docs are bundled.
+- **Live 3D, honest data.** The dashboard opens on a procedural Earth with a station on a 51.6° (ISS) orbit, a floating astronaut, and **your vitals as satellites** coloured by their cited status. A 3D *vitals field* plots 30 days of readings as σ from your own baseline. The Radiation page animates the Sun → Earth scene from real DONKI counts.
+- **Offline by design.** No CDN, no analytics, no cloud calls. Fonts are bundled, 3D code loads lazily, and even the API docs are bundled.
 
 <p align="center"><img src="docs/assets/divider-03-screenshots.svg" width="100%" alt="Section 03: screenshots"/></p>
 
-<p align="center"><img src="docs/screenshots/dashboard.png" width="100%" alt="Dashboard: status cards coloured against cited thresholds, an Unusual for you badge on heart rate, and the cabin panel"/></p>
-<p align="center"><sub><b>The dashboard.</b> Each card shows a cited colour, plain-English guidance and your baseline. Heart rate is flagged "Unusual for you" after two high days.</sub></p>
+<p align="center"><img src="docs/screenshots/dashboard.png" width="100%" alt="Dashboard hero: a 3D Earth with an orbiting station, a floating astronaut and the crew member's vitals as satellites, under the headline All cited readings in range"/></p>
+<p align="center"><sub><b>The dashboard hero.</b> Earth, a station on a 51.6° orbit and an astronaut, all original 3D geometry. The satellites are your latest vitals in their cited status colours: hover or tap one. The headline is computed live.</sub></p>
 
-<p align="center"><img src="docs/screenshots/trends.png" width="100%" alt="Trend charts with shaded green, amber and red bands"/></p>
+<p align="center"><img src="docs/screenshots/instruments.png" width="100%" alt="Instrument cards: big tabular numerals, shape-and-word status marks, guidance, personal baseline and a source link on each card"/></p>
+<p align="center"><sub><b>Instruments.</b> Status is always a shape and a word (● ▲ ■ ○), never colour alone. Numerals count up, and each card cites its source.</sub></p>
+
+<p align="center"><img src="docs/screenshots/trends.png" width="100%" alt="Trend charts with shaded cited bands"/></p>
 <p align="center"><sub><b>Trends over 7, 30 or 90 days.</b> Bands are shaded only where a source exists. Hollow grey dots are simulated.</sub></p>
 
 | | |
 |:---:|:---:|
-| <img src="docs/screenshots/radiation.png" width="100%" alt="Radiation page: estimated mission dose and DONKI event timeline"/> | <img src="docs/screenshots/bodymap.png" width="100%" alt="Body map with a symptom dot on the head and the recent symptom list"/> |
-| **Radiation.** DONKI events and a dose range, labelled as an estimate. | **Body map.** Tap a region and log it. Front and back views. |
-
-<p align="center"><img src="docs/screenshots/environment.png" width="100%" alt="Cabin environment: latest CO₂, temperature and humidity, the entries table and trend charts"/></p>
-<p align="center"><sub><b>Cabin environment.</b> CO₂, temperature and humidity checked against NASA-STD-3001, with recent entries and trends.</sub></p>
+| <img src="docs/screenshots/radiation.png" width="100%" alt="Radiation page: an animated 3D Sun to Earth scene driven by DONKI counts, and the estimated dose"/> | <img src="docs/screenshots/checkin.png" width="100%" alt="Camera check-in: animated viewfinder with forehead ROI, pulse trace and countdown ring, plus the method note"/> |
+| **Radiation.** Flares, CMEs, SEP and storms from DONKI animate a Sun → Earth scene. The dose is labelled an estimate. | **Camera check-in.** An animated viewfinder, a checklist, and an honest method note. |
+| <img src="docs/screenshots/environment.png" width="100%" alt="Cabin environment: entry form, latest values against NASA-STD-3001 and trend charts"/> | <img src="docs/screenshots/bodymap.png" width="100%" alt="Body map: tap a region to log a symptom, with symptom dots and a scan line"/> |
+| **Cabin environment.** CO₂, temperature and humidity against NASA-STD-3001. | **Body map.** Tap a region and log it. Front and back views. |
 
 <p align="center"><sub>Captured from the <a href="https://arhamurrahemeen.github.io/CrewPulse_NASA_SpaceApps_Challenge_2026/">live demo</a>, which uses simulated crew data (crew-1 to crew-4) and cached NASA DONKI events.</sub></p>
 
@@ -61,11 +65,13 @@ So astronauts need to **check their own health, notice what has changed for them
 
 Every threshold lives in [`backend/rules/thresholds.json`](backend/rules/thresholds.json) with a `source_title` and `source_url`. A value nobody has published stays `null` with a todo, and the app shows the reading **uncoloured** instead of guessing. The wording follows fixed rules: *monitoring*, *check*, *consider*, *contact flight surgeons*. It never says *diagnose*.
 
+**Design system.** Art direction *"Flight data, printed"* by Abdul Awwal: deep-space ink, warm greys, and International Orange only for what you can act on. Data is drawn in Earth-limb blue, orange's complement. Every text colour passes WCAG AA. Full tokens, type, motion and 3D notes are in [`DESIGN.md`](DESIGN.md).
+
 <p align="center"><img src="docs/assets/divider-05-architecture.svg" width="100%" alt="Section 05: architecture"/></p>
 
 <p align="center"><img src="docs/assets/architecture.svg" width="100%" alt="Architecture: React pages call a local FastAPI backend (rules, baseline, rPPG, DONKI) over SQLite. The webcam stays local, and DONKI is fetched only when online."/></p>
 
-Everything runs on one machine. Camera frames never leave it. The only outside call is DONKI, made when a network happens to be available; otherwise the cache is served and the page shows how old it is.
+Everything runs on one machine. Camera frames never leave it. The 3D scenes use three.js through React Three Fiber, load after the page, and fall back cleanly without WebGL. The only outside call is DONKI, made when a network happens to be available; otherwise the cache is served and the page shows how old it is.
 
 <p align="center"><img src="docs/assets/stack.svg" width="100%" alt="Stack: Python, FastAPI, SQLite, OpenCV, MediaPipe, NumPy, SciPy, httpx, pytest; React, Vite, Recharts; NASA DONKI and NASA-STD-3001"/></p>
 
@@ -146,12 +152,13 @@ What *is* verified, on synthetic signals:
 | DONKI radiation panel with offline cache | Spaceflight-specific resting-vitals thresholds |
 | Cabin environment log and body map | Reminders and a multi-crew view |
 | Offline operation, plus a public read-only demo | |
+| 3D orbit hero, vitals field and space-weather scene | A 3D body map |
 
 Known limits:
 
 - **Not a medical device.** CrewPulse is decision support for monitoring. It has no clinical validation and never diagnoses.
 - **Small n.** The camera has been tried on one person, with no oximeter pairs yet. The earlier green-channel build this code descends from read 15–25 bpm low in one informal test.
-- **Skin-tone bias.** Camera heart rate is less accurate on darker skin ([Nowara et al. 2020](https://openaccess.thecvf.com/content_CVPRW_2020/html/w19/Nowara_A_Meta-Analysis_of_the_Impact_of_Skin_Tone_and_Gender_CVPRW_2020_paper.html)). The reference device is biased too: pulse oximeters overestimate SpO₂ in Black patients ([Sjoding et al. 2020](https://doi.org/10.1056/NEJMc2029240)). Validation needs a range of skin tones.
+- **Skin-tone bias.** In an audit of public rPPG datasets, error rose from about 5 bpm on lighter skin (Fitzpatrick I–III) to about 14 bpm on darker skin (V–VI) ([Bondarenko et al. 2025](https://doi.org/10.1038/s41746-025-01973-9)). The reference device is biased too: pulse oximeters overestimated SpO₂ more often in Black, Hispanic and Asian patients ([Fawzy et al. 2022](https://doi.org/10.1001/jamainternmed.2022.1906)). Validation needs a range of skin tones.
 - **Light and motion** degrade the camera reading, and the quality gate isn't tuned yet.
 - **Thresholds are terrestrial** unless NASA-STD-3001 gives a value.
 - **The baseline needs 7 days of history** and assumes a steady routine.
@@ -163,8 +170,12 @@ Known limits:
 
 **Reused code.** `backend/rppg/roi.py`, `lighting.py` and `dsp_pipeline.py` are adapted from [VitalSense](https://github.com/Arhamurrahemeen/VitalSense) (MIT), the team lead's own earlier open-source project, at commit [`61a0b0ccb07cf1a3ac8cc22252e86edb62f97e21`](https://github.com/Arhamurrahemeen/VitalSense/commit/61a0b0ccb07cf1a3ac8cc22252e86edb62f97e21). They were reused with permission of the Karachi Local Lead, and each file carries an attribution header. Everything else was written for this hackathon.
 
+**Design.** Art direction, colour tokens and the 3D vitals-field concept: **Abdul Awwal** (OmniteX). See [`DESIGN.md`](DESIGN.md), including what we left out of his package and why.
+
 **Bundled for offline use:**
 - Swagger UI 5.34.1 (`backend/static/swagger/`, Apache-2.0)
+- three.js 0.172, @react-three/fiber 8.18, @react-three/drei 9.122 (MIT)
+- Archivo, Newsreader (SIL OFL) and JetBrains Mono (OFL) through @fontsource, served from the app itself
 - MediaPipe Face Landmarker model (downloaded, not committed; Apache-2.0)
 
 **AI-assistance disclosure.** CrewPulse was built with **Claude Code** (Anthropic), an AI coding assistant. It wrote and edited code, tests and documentation under the team's direction. The team checked thresholds and sources against primary documents and tested every feature in the browser.
@@ -197,8 +208,9 @@ Data:
 
 Method and limitations:
 - Heart-rate accuracy criterion ±10 % or ±5 bpm: IEC 60601-2-27, as quoted by device makers. The standard itself is paywalled and was not checked.
-- Nowara EM, McDuff D, Veeraraghavan A. A Meta-Analysis of the Impact of Skin Tone and Gender on Non-Contact Photoplethysmography Measurements. CVPR Workshops 2020. https://openaccess.thecvf.com/content_CVPRW_2020/html/w19/Nowara_A_Meta-Analysis_of_the_Impact_of_Skin_Tone_and_Gender_CVPRW_2020_paper.html
-- Sjoding MW et al. Racial Bias in Pulse Oximetry Measurement. *N Engl J Med* 2020;383:2477–2478. https://doi.org/10.1056/NEJMc2029240
+- Bondarenko M, Menon C, Elgendi M. Demographic bias in public remote photoplethysmography datasets. *npj Digital Medicine* 2025;8:593. https://doi.org/10.1038/s41746-025-01973-9
+- Fawzy A et al. Racial and Ethnic Discrepancy in Pulse Oximetry and Delayed Identification of Treatment Eligibility Among Patients With COVID-19. *JAMA Intern Med* 2022. https://doi.org/10.1001/jamainternmed.2022.1906
+- POS method: Wang W, den Brinker AC, Stuijk S, de Haan G. Algorithmic Principles of Remote PPG. *IEEE Trans Biomed Eng* 2017;64(7):1479–1491. https://doi.org/10.1109/TBME.2016.2609282 (method attribution, not used as evidence)
 
 </details>
 

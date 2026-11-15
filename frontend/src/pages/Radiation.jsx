@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api.js'
 import SourceLink from '../components/SourceLink.jsx'
+import Safe3D from '../components/Safe3D.jsx'
+import { CountUp, Section } from '../components/ui.jsx'
+
+const SpaceWeather3D = lazy(() => import('../components/SpaceWeather3D.jsx'))
 
 const TYPES = {
-  SEP: { name: 'Solar energetic particles', color: '#f85149' },
-  FLR: { name: 'Solar flare', color: '#d29922' },
+  SEP: { name: 'Solar energetic particles', color: '#e5484d' },
+  FLR: { name: 'Solar flare', color: '#e8b23a' },
   CME: { name: 'Coronal mass ejection', color: '#5fb3f9' },
-  GST: { name: 'Geomagnetic storm', color: '#bc8cff' },
+  GST: { name: 'Geomagnetic storm', color: '#b58cff' },
 }
 const ORDER = ['SEP', 'FLR', 'CME', 'GST']
 
@@ -26,7 +30,7 @@ function DosePanel({ dose, sepCount, missionDays, setMissionDays }) {
         <input type="number" min={1} max={1000} value={missionDays} onChange={(e) => setMissionDays(e.target.value)} />
       </label>
       <div className="big">
-        {dose.low_msv}–{dose.high_msv} <span>mSv</span>
+        <CountUp value={`${dose.low_msv}–${dose.high_msv}`} /> <span>mSv</span>
       </div>
       <div className="meter" aria-label={`${lo} to ${hi} percent of the 600 mSv career limit`}>
         <div className="meter-lo" style={{ width: `${Math.min(lo, 100)}%` }} />
@@ -57,9 +61,9 @@ function Strip({ events, start, end }) {
   return (
     <ResponsiveContainer width="100%" height={170}>
       <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#2a3139" strokeDasharray="3 3" />
-        <XAxis dataKey="t" type="number" scale="time" domain={[t0, t1]} ticks={ticks} tickFormatter={fmtDay} stroke="#9aa4ae" fontSize={11} />
-        <YAxis dataKey="y" type="number" domain={[-0.5, 3.5]} ticks={[0, 1, 2, 3]} tickFormatter={(i) => ORDER[i]} stroke="#9aa4ae" fontSize={11} width={40} reversed />
+        <CartesianGrid stroke="#1e2126" strokeDasharray="2 4" />
+        <XAxis dataKey="t" type="number" scale="time" domain={[t0, t1]} ticks={ticks} tickFormatter={fmtDay} stroke="#8a8d93" fontSize={10} />
+        <YAxis dataKey="y" type="number" domain={[-0.5, 3.5]} ticks={[0, 1, 2, 3]} tickFormatter={(i) => ORDER[i]} stroke="#8a8d93" fontSize={10} width={40} reversed />
         <Tooltip
           cursor={false}
           content={({ active, payload }) =>
@@ -106,7 +110,9 @@ export default function Radiation() {
 
   return (
     <section className="radiation">
+      <div className="kicker"><b>04 · Radiation</b><span>NASA CCMC DONKI</span><span>cached for offline use</span></div>
       <h1>Radiation &amp; space weather</h1>
+      <p className="lede">What the Sun did in the last 30 days, and a rough range for your mission dose. The dose is an estimate from published ISS averages, never a dosimeter reading.</p>
       {error && <div className="card warn">{error}</div>}
       {data && (
         <>
@@ -118,9 +124,16 @@ export default function Radiation() {
             </button>
           </p>
 
+          <div className="space3d crop">
+            <Safe3D fallback={null}>
+              <Suspense fallback={null}><SpaceWeather3D counts={data.counts} /></Suspense>
+            </Safe3D>
+          </div>
+          <p className="muted mono" style={{ marginTop: '-0.5rem' }}>Illustration, not to scale: flares flash on the Sun, CMEs travel as shells, SEP particles stream, a storm lights Earth's field. Drag to orbit.</p>
+
           <DosePanel dose={data.dose} sepCount={data.counts.SEP} missionDays={missionDays} setMissionDays={setMissionDays} />
 
-          <h2>Event timeline (last 30 days)</h2>
+          <Section num="4.2" title="Event timeline" aside="last 30 days · tap a type to filter" />
           <div className="toggle-group" role="group" aria-label="Event types">
             {ORDER.map((k) => (
               <button key={k} aria-pressed={shown[k]} onClick={() => setShown((s) => ({ ...s, [k]: !s[k] }))}>

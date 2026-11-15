@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { api, DEMO } from '../api.js'
 import StatusCard from '../components/StatusCard.jsx'
 import StressHrvCard from '../components/StressHrvCard.jsx'
 import TrendChart from '../components/TrendChart.jsx'
+import Safe3D from '../components/Safe3D.jsx'
+import { Section } from '../components/ui.jsx'
+import { buildField, CHANNELS } from '../components/fieldData.js'
+
+const OrbitScene = lazy(() => import('../components/OrbitScene.jsx'))
+const VitalsField = lazy(() => import('../components/VitalsField.jsx'))
 
 const RANK = { red: 3, amber: 2, green: 1 }
 
@@ -70,7 +76,6 @@ function Trends({ crew, reload }) {
 
   return (
     <section className="trends">
-      <h2>Trends</h2>
       <div className="toggle-group" role="group" aria-label="Time range">
         {RANGES.map((d) => (
           <button key={d} aria-pressed={d === days} onClick={() => setDays(d)}>
@@ -85,9 +90,57 @@ function Trends({ crew, reload }) {
   )
 }
 
+// Headline from cited statuses only; "unusual for you" comes from the personal baseline.
+function headline(items) {
+  if (!items?.length) return { h: <>No readings <em>yet</em>.</>, sub: 'Log a reading or run a camera check-in to start your baseline.' }
+  const flat = items.flatMap((x) => x.parts ?? [x])
+  const red = flat.filter((x) => x.status === 'red').length
+  const amber = flat.filter((x) => x.status === 'amber').length
+  const unusual = flat.filter((x) => x.baseline?.reasons?.length).length
+  const uncited = flat.filter((x) => !x.status).length
+  // Emphasis takes the status colour (orange stays reserved for actions).
+  const h = red ? <><em className="red">{red}</em> reading{red > 1 ? 's' : ''} need{red > 1 ? '' : 's'} attention.</>
+    : amber ? <><em className="amber">{amber}</em> reading{amber > 1 ? 's' : ''} to check.</>
+      : <>All cited readings <em className="green">in range</em>.</>
+  const last = flat.reduce((a, x) => (x.ts > a ? x.ts : a), '')
+  const sub = [unusual ? `${unusual} unusual for you` : 'nothing unusual for you', `${uncited} without a cited threshold`, `last reading ${new Date(last).toLocaleString()}`].join(' · ')
+  return { h, sub }
+}
+
+function Field({ crew, status, reload }) {
+  const [series, setSeries] = useState(null)
+  const [iso, setIso] = useState(-1)
+  useEffect(() => {
+    if (!crew) return
+    api(`/trends/${encodeURIComponent(crew)}?days=30`).then((d) => setSeries(d.indicators), () => setSeries([]))
+  }, [crew, reload])
+  const field = useMemo(() => (series && status ? buildField(series, status) : []), [series, status])
+  if (!series) return null
+  if (!field.length) return <p className="muted">The field appears once at least one indicator has a 7-day baseline.</p>
+  return (
+    <>
+      <div className="field-channels" role="group" aria-label="Isolate a channel">
+        <button aria-pressed={iso < 0} onClick={() => setIso(-1)}>All</button>
+        {field.map((l, i) => <button key={l.ind} aria-pressed={iso === i} onClick={() => setIso(iso === i ? -1 : i)}>{l.short}</button>)}
+      </div>
+      <div className="field3d crop">
+        <Safe3D fallback={<p className="muted" style={{ padding: '1rem' }}>3D view unavailable on this device; the trend charts below show the same readings.</p>}>
+          <Suspense fallback={null}><VitalsField field={field} isolate={iso} /></Suspense>
+        </Safe3D>
+      </div>
+      <div className="field-legend">
+        <span>Lane = one indicator · height = σ from your own mean</span>
+        <span>Dashed = ±2σ, your usual band</span>
+        <span style={{ color: 'var(--amber)' }}>□ outside your band (one point alone is not an alert)</span>
+        <span>Drag to orbit · hover a point</span>
+      </div>
+    </>
+  )
+}
+
 export default function Dashboard() {
   const [crew, setCrew] = useState(DEMO ? 'crew-1' : 'c1')
-  const [items, setItems] = useState(null)
+  const [raw, setRaw] = useState(null)
   const [error, setError] = useState(null)
   const [loaded, setLoaded] = useState({ crew: null, n: 0 })
 
@@ -95,29 +148,64 @@ export default function Dashboard() {
     setError(null)
     setLoaded((l) => ({ crew, n: l.n + 1 }))
     try {
-      setItems(mergeStressHrv(mergeBp(await api(`/status/${encodeURIComponent(crew)}`))))
+      setRaw(await api(`/status/${encodeURIComponent(crew)}`))
     } catch (e) {
       setError(e.message)
     }
   }
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const items = useMemo(() => (raw ? mergeStressHrv(mergeBp(raw)) : null), [raw])
+  const orbit = useMemo(() => (raw ?? []).filter((x) => CHANNELS.some(([c]) => c === x.indicator) || x.indicator === 'bp_diastolic'), [raw])
+  const { h, sub } = headline(items)
+
   return (
     <section>
-      <h1>Dashboard</h1>
-      <p className="muted">Latest reading per indicator. Monitoring and decision support only.</p>
-      <label>
-        Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} list="crew-ids" />
-      </label>{' '}
-      {DEMO && <datalist id="crew-ids">{['crew-1', 'crew-2', 'crew-3', 'crew-4'].map((c) => <option key={c} value={c} />)}</datalist>}
-      <button onClick={load}>Refresh</button>
-      {error && <div className="card warn">{error}</div>}
-      {items?.length === 0 && <p>No readings yet. Log some on the Log page or run a check-in.</p>}
-      <div className="with-aside">
-        <div className="grid">{items?.map((x) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} /> : <StatusCard key={x.indicator} {...x} />))}</div>
-        <CabinPanel reload={loaded.n} />
+      <div className="hero">
+        <div className="hero-canvas">
+          <div className="hero-fallback" />
+          <Safe3D fallback={null}>
+            <Suspense fallback={null}><OrbitScene items={orbit} /></Suspense>
+          </Safe3D>
+        </div>
+        <div className="hero-hud" aria-hidden="true">
+          <span className="hud-chip">Crew <b>{loaded.crew ?? crew}</b></span>
+          <span className="hud-chip">Orbit inclination <b>51.6°</b> · ISS-class</span>
+          <span className="hud-chip">Baseline <b>28 d · ±2 SD · 2 days</b></span>
+          <span className="hud-chip">Satellites = your vitals · <b>tap one</b></span>
+        </div>
+        <div className="hero-copy">
+          <div className="kicker"><b>01 · Self-check</b><span>Monitoring, not diagnosis</span><span>Works offline</span></div>
+          <h1>{error ? <>Can't reach the <em>local store</em>.</> : h}</h1>
+          <p className="lede">{error ?? sub}</p>
+          <div className="hero-actions">
+            <a className="btn-primary" href="#CheckIn">Begin camera check-in →</a>
+            <a href="#Log">Log readings</a>
+            <a href="#BodyMap">Body map</a>
+          </div>
+        </div>
       </div>
-      <Trends crew={loaded.crew} reload={loaded.n} />
+
+      <Section num="1.1" title="Instruments" aside="colour only where a guideline is cited">
+        <label className="mono">
+          Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} list="crew-ids" style={{ width: '9rem', marginLeft: '0.5rem' }} />
+        </label>{' '}
+        {DEMO && <datalist id="crew-ids">{['crew-1', 'crew-2', 'crew-3', 'crew-4'].map((c) => <option key={c} value={c} />)}</datalist>}
+        <button onClick={load}>Refresh</button>
+        {items?.length === 0 && <p className="muted">No readings yet. Log some on the Log page or run a check-in.</p>}
+        <div className="with-aside">
+          <div className="grid">{items?.map((x, i) => (x.parts ? <StressHrvCard key={x.indicator} parts={x.parts} i={i} /> : <StatusCard key={x.indicator} {...x} i={i} />))}</div>
+          <CabinPanel reload={loaded.n} />
+        </div>
+      </Section>
+
+      <Section num="1.2" title="Vitals field" aside="30 days · σ from your own baseline · 3D">
+        <Field crew={loaded.crew} status={raw} reload={loaded.n} />
+      </Section>
+
+      <Section num="1.3" title="Trends" aside="7 / 30 / 90 days · cited bands shaded">
+        <Trends crew={loaded.crew} reload={loaded.n} />
+      </Section>
     </section>
   )
 }

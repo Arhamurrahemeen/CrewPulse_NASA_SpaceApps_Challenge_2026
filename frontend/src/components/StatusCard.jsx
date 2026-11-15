@@ -1,6 +1,7 @@
 import GuidancePanel from './GuidancePanel.jsx'
 import SourceLink from './SourceLink.jsx'
 import SimulatedBadge from './SimulatedBadge.jsx'
+import { CountUp } from './ui.jsx'
 
 const fmt = (x) => (x > 0 ? '+' : '') + x
 
@@ -29,9 +30,9 @@ export function Baseline({ b, unit }) {
   )
 }
 
-export default function StatusCard({ label, value, unit, ts, source, status, band, guidance, escalate_to_flight_surgeon, source_title, source_url, baseline }) {
+export default function StatusCard({ label, value, unit, ts, source, status, band, guidance, escalate_to_flight_surgeon, source_title, source_url, baseline, i = 0 }) {
   return (
-    <article className={`status-card ${status ?? 'none'}`}>
+    <article className={`status-card reveal ${status ?? 'none'}`} style={{ '--i': i }}>
       <header>
         <h2>{label}</h2>
         <span className="badges">
@@ -40,7 +41,7 @@ export default function StatusCard({ label, value, unit, ts, source, status, ban
         </span>
       </header>
       <div className="big">
-        {value} <span>{unit}</span>
+        <CountUp value={value} /> <span>{unit}</span>
       </div>
       <div className="muted">{new Date(ts).toLocaleString()}</div>
       <GuidancePanel status={status} band={band} guidance={guidance} escalate={escalate_to_flight_surgeon} />

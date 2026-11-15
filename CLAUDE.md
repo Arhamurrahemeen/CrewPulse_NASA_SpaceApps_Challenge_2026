@@ -46,7 +46,7 @@ Known issue: in one informal test the old green-channel build read 15–25 BPM l
 
 ## Stack
 - `backend/` — Python 3.11+, FastAPI, SQLite (stdlib `sqlite3`), OpenCV, MediaPipe, NumPy, SciPy, httpx.
-- `frontend/` — React + Vite, Recharts for charts, plain CSS. No heavy UI frameworks.
+- `frontend/` — React 18 + Vite, Recharts for charts, plain CSS (tokens in `src/index.css`, documented in `DESIGN.md`). 3D: three.js via @react-three/fiber 8 + drei 9, lazy-loaded, wrapped in `Safe3D` so pages work without WebGL. Fonts bundled via @fontsource (no CDN). No heavy UI frameworks (no Tailwind/shadcn).
 - Runs locally: backend on `localhost:8000`, frontend on `localhost:5173`.
 - `frontend` has a `VITE_DEMO_MODE=true` build (`npm run build:demo`) that reads simulated data from `public/demo.json` and needs no backend; GitHub Actions deploys it to GitHub Pages on every push to main.
 
@@ -65,7 +65,9 @@ backend/
   tests/               pytest
 frontend/src/
   pages/ Dashboard, CheckIn, Log, Radiation, Environment, BodyMap
-  components/ StatusCard, TrendChart, GuidancePanel, SourceLink, SimulatedBadge
+  components/ StatusCard, TrendChart, GuidancePanel, SourceLink, SimulatedBadge, ui (StatusMark, CountUp, Section),
+              OrbitScene (3D hero), VitalsField (3D σ field) + fieldData, SpaceWeather3D (Radiation), Safe3D
+DESIGN.md              design system: colour (60/30/10, WCAG), type, motion, 3D scenes; art direction by Abdul Awwal
 tools/validate.py      camera vs oximeter pairs → MAE, bias, Bland–Altman PNG
 ```
 

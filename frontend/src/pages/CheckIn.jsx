@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api, DEMO, INDICATORS } from '../api.js'
 
 const [HR_MIN, HR_MAX] = INDICATORS.heart_rate.limits
@@ -34,8 +34,37 @@ function OximeterPair({ crew, cameraTs }) {
   )
 }
 
+// Animated viewfinder. Illustration only: the real camera runs in the backend's own preview window.
+function Scanner({ state }) {
+  const [secs, setSecs] = useState(0)
+  useEffect(() => {
+    if (state !== 'scanning') return setSecs(0)
+    const t = setInterval(() => setSecs((s) => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [state])
+  const p = Math.min(1, secs / 45)
+  return (
+    <div className={`scanner ${state}`} aria-hidden="true">
+      <svg viewBox="0 0 320 240">
+        <defs><linearGradient id="sweep" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#5fb3f9" stopOpacity="0" /><stop offset="1" stopColor="#5fb3f9" stopOpacity="0.5" /></linearGradient></defs>
+        <ellipse cx="160" cy="112" rx="58" ry="74" className="face" />
+        {[[100, 40, 1, 1], [220, 40, -1, 1], [100, 184, 1, -1], [220, 184, -1, -1]].map(([x, y, sx, sy], i) => (
+          <path key={i} d={`M${x} ${y + 18 * sy} V${y} H${x + 18 * sx}`} className="bracket" />
+        ))}
+        <rect x="122" y="52" width="76" height="34" className="roi" />
+        <text x="122" y="47" className="roi-label">ROI · forehead</text>
+        <rect x="96" y="40" width="128" height="24" fill="url(#sweep)" className="sweep" />
+        <polyline className="bvp" points="20,214 60,214 72,214 80,200 88,226 98,190 108,220 116,214 150,214 162,214 170,200 178,226 188,190 198,220 206,214 240,214 252,214 260,200 268,226 278,190 288,220 296,214 300,214" />
+        <circle cx="290" cy="30" r="16" className="ring-bg" />
+        <circle cx="290" cy="30" r="16" className="ring" style={{ strokeDasharray: 100.5, strokeDashoffset: 100.5 * (1 - p) }} transform="rotate(-90 290 30)" />
+        <text x="290" y="34" className="ring-t">{state === 'scanning' ? secs : '30s'}</text>
+      </svg>
+    </div>
+  )
+}
+
 export default function CheckIn() {
-  const [crew, setCrew] = useState('c1')
+  const [crew, setCrew] = useState(DEMO ? 'crew-1' : 'c1')
   const [state, setState] = useState('idle') // idle | scanning | done | error
   const [result, setResult] = useState(null)
 
@@ -52,13 +81,13 @@ export default function CheckIn() {
   }
 
   return (
-    <section className="checkin">
-      <h1>Camera check-in</h1>
-      <p className="muted">
-        Face the camera in even light and keep still. The camera starts, then scans for 30 s. Heart rate only.
-        Press q in the camera window to cancel. Wearing a pulse oximeter? Note its heart rate when the scan
-        ends and save it below the result — those pairs measure how accurate the camera is.
-      </p>
+    <section>
+      <div className="kicker"><b>02 · Camera check-in</b><span>rPPG · POS method</span><span>heart rate only</span></div>
+      <h1>A 30-second pulse reading from your face.</h1>
+      <p className="lede">The camera opens in its own window and scans for 30 s. A weak signal means a re-scan, never a number. Press q in that window to cancel.</p>
+      <div className="checkin-layout">
+      <Scanner state={state} />
+      <div className="checkin">
       {DEMO && (
         <div className="card warn">
           Camera check-in is turned off in this online demo: it needs the CrewPulse backend running on your own
@@ -88,6 +117,22 @@ export default function CheckIn() {
         </div>
       )}
       {state === 'error' && <div className="card warn">Check-in failed: {result.error}</div>}
+      <div className="card">
+        <div className="mono muted">Before you scan</div>
+        <ol className="checklist">
+          <li>Even light from the front, nothing bright behind you.</li>
+          <li>Sit still, rest your elbows, keep your head steady for the full scan.</li>
+          <li>Wearing a fingertip oximeter? Type its heart rate under the result: those pairs measure how accurate the camera is.</li>
+        </ol>
+        <div className="mono muted">Note on method</div>
+        <p className="serif" style={{ margin: '0.3rem 0 0' }}>
+          Remote photoplethysmography reads tiny colour changes in the skin. Accuracy drops with motion, low light and
+          darker skin tones, and CrewPulse has not yet been validated against an oximeter. Confirm with the oximeter when it matters.
+        </p>
+        <a className="source" href="https://doi.org/10.1109/TBME.2016.2609282" target="_blank" rel="noreferrer">Wang et al. 2017, Algorithmic Principles of Remote PPG, IEEE TBME</a>
+      </div>
+      </div>
+      </div>
     </section>
   )
 }

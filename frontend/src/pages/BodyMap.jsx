@@ -63,6 +63,7 @@ function Figure({ view, selected, onSelect, byPart }) {
           </g>
         )
       })}
+      <rect className="scan" x={20} y={2} width={200} height={1.5} />
       <text className="side" x={14} y={436}>{view === 'front' ? 'R' : 'L'}</text>
       <text className="side" x={226} y={436} textAnchor="end">{view === 'front' ? 'L' : 'R'}</text>
     </svg>
@@ -112,8 +113,9 @@ export default function BodyMap() {
 
   return (
     <section className="bodymap">
-      <h1>Body map</h1>
-      <p className="muted">
+      <div className="kicker"><b>06 · Body map</b><span>tap a region</span><span>front and back</span></div>
+      <h1>Where does it hurt?</h1>
+      <p className="lede">
         Tap where you feel something and log it. Dots show symptoms from the last {DAYS} days (number = highest severity).
         For monitoring only: if a symptom is severe, getting worse or not going away, contact flight surgeons.
       </p>

@@ -81,9 +81,10 @@ export default function Environment() {
 
   return (
     <section>
-      <h1>Cabin environment</h1>
-      <form className="log" onSubmit={submit}>
-        <p className="muted">Log what the cabin displays show; empty fields are skipped. Shared by the whole crew.</p>
+      <div className="kicker"><b>05 · Cabin environment</b><span>NASA-STD-3001 Vol 2</span><span>shared by the whole crew</span></div>
+      <h1>The air you breathe, logged beside your vitals.</h1>
+      <p className="lede">CO₂, temperature and humidity from the cabin displays, checked against NASA's crew health limits and performance zone.</p>
+      <form className="log card" onSubmit={submit}>
         <Field id="co2_mmhg" value={values.co2_mmhg} onChange={set} step={co2Unit === 'ppm' ? 1 : 0.1}>
           <select value={co2Unit} onChange={(e) => setCo2Unit(e.target.value)} aria-label="CO₂ unit">
             <option>ppm</option>
