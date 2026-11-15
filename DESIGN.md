@@ -79,7 +79,9 @@ Scale: hero 2.6–5.6 rem (clamp) · h1 2.4–4.2 rem · instrument 3.4–3.6 re
 | **Vitals field** (Dashboard) | `components/VitalsField.jsx` | Awwal's concept, wired to real data. One lane per indicator; height = σ from **your own** baseline mean and SD; x = real time over 30 days; dashed lines = ±2σ; amber squares = points outside the band (labelled "one point alone is not an alert"). Orbit, hover, isolate a channel. |
 | **Space weather** (Radiation) | `components/SpaceWeather3D.jsx` | Sun → Earth, driven by the cached DONKI counts: flares flash on the Sun, CMEs travel as shells, SEP particles stream, a geomagnetic storm lights Earth's field lines. Labelled "illustration, not to scale". |
 
-All three use zero textures and no network, and are wrapped in `Safe3D` (an error boundary). If WebGL fails, the page still works. The orbit hero's lit-planet gradient stays as a fallback.
+| **Body map** (Body map) | `components/Body3D.jsx` | An original figure built from basic shapes in a scan-hologram style (wireframe overlay, moving scan ring, floor rings). Front or back of the torso is decided by where the click lands. Hover labels show the region. Symptom dots carry the highest severity and hide behind the body (`Html occlude`). Front/Back buttons turn the figure. A Flat SVG view and a region `<select>` keep it keyboard-accessible. |
+
+All four use zero textures and no network, and are wrapped in `Safe3D` (an error boundary). If WebGL fails, the page still works. The orbit hero's lit-planet gradient stays as a fallback.
 
 ## Components
 
@@ -98,7 +100,7 @@ These were in the design files but don't match the data or the safety rules, so 
 - **Dose figures:** 50–100 mSv per six months. Our cited NASA source says 80–160.
 - **Overclaim:** rPPG described as "a good screening tool".
 
-**Not built yet:** hazard index, check-in streak, mission-elapsed clock, ground sync, surgeon summary export, paper theme, 38-region body map. These are candidates after the hackathon.
+**Not built yet:** hazard index, check-in streak, mission-elapsed clock, ground sync, surgeon summary export, paper theme, 38-region body map (ours has 11 regions). These are candidates after the hackathon.
 
 ## No NASA branding
 

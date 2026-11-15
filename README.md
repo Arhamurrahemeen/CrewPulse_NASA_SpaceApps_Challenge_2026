@@ -35,7 +35,7 @@ So astronauts need to **check their own health, notice what has changed for them
 - **Unusual for you.** It flags a reading outside your own 28-day mean ± 2 SD **on two days in a row**, so one odd reading doesn't raise an alarm.
 - **Radiation.** Solar flares, CMEs, storms and SEP events from NASA DONKI, cached for offline use, plus a mission dose clearly labelled **ESTIMATE**.
 - **Cabin environment.** CO₂, temperature and humidity against NASA-STD-3001 limits, shown next to your vitals.
-- **Body map.** Tap where it hurts to log a symptom (severity 1–5). Dots show the last 14 days.
+- **3D body map.** Turn a scan-style 3D figure and click where it hurts to log a symptom (severity 1–5). Front or back is read from where you click. Dots sit on the body for the last 14 days. A flat view and a region list keep it keyboard-friendly.
 - **Live 3D, honest data.** The dashboard opens on a procedural Earth with a station on a 51.6° (ISS) orbit, a floating astronaut, and **your vitals as satellites** coloured by their cited status. A 3D *vitals field* plots 30 days of readings as σ from your own baseline. The Radiation page animates the Sun → Earth scene from real DONKI counts.
 - **Offline by design.** No CDN, no analytics, no cloud calls. Fonts are bundled, 3D code loads lazily, and even the API docs are bundled.
 
@@ -55,7 +55,7 @@ So astronauts need to **check their own health, notice what has changed for them
 | <img src="docs/screenshots/radiation.png" width="100%" alt="Radiation page: an animated 3D Sun to Earth scene driven by DONKI counts, and the estimated dose"/> | <img src="docs/screenshots/checkin.png" width="100%" alt="Camera check-in: animated viewfinder with forehead ROI, pulse trace and countdown ring, plus the method note"/> |
 | **Radiation.** Flares, CMEs, SEP and storms from DONKI animate a Sun → Earth scene. The dose is labelled an estimate. | **Camera check-in.** An animated viewfinder, a checklist, and an honest method note. |
 | <img src="docs/screenshots/environment.png" width="100%" alt="Cabin environment: entry form, latest values against NASA-STD-3001 and trend charts"/> | <img src="docs/screenshots/bodymap.png" width="100%" alt="Body map: tap a region to log a symptom, with symptom dots and a scan line"/> |
-| **Cabin environment.** CO₂, temperature and humidity against NASA-STD-3001. | **Body map.** Tap a region and log it. Front and back views. |
+| **Cabin environment.** CO₂, temperature and humidity against NASA-STD-3001. | **Body map.** Tap a region and log it. A 3D figure, plus a flat view. |
 
 <p align="center"><sub>Captured from the <a href="https://arhamurrahemeen.github.io/CrewPulse_NASA_SpaceApps_Challenge_2026/">live demo</a>, which uses simulated crew data (crew-1 to crew-4) and cached NASA DONKI events.</sub></p>
 
@@ -110,7 +110,9 @@ python -m sim.generate --crew 4 --days 90 --seed 42
 
 **Tests:** `cd backend && pytest -q`
 
-**Demo build:** `python -m sim.export_demo` writes `frontend/public/demo.json`, and `npm run build:demo` builds the static site. Pushing to `main` deploys it to GitHub Pages.
+**Demo build:** `python -m sim.export_demo` writes `frontend/public/demo.json`, and `npm run build:demo` builds the static site. Pushing to `main` deploys it to GitHub Pages. The demo is interactive with no server: what a visitor logs (readings, cabin values, symptoms) is kept only in their own browser and coloured by the same `thresholds.json`. **Reset demo** clears it. The camera check-in needs the local backend.
+
+**Why no hosted backend:** the camera check-in reads the webcam of the machine running the backend, so a cloud server can't do it. There's no login, so a public API would expose health data. Free tiers also wipe SQLite on restart. A local backend plus a static demo keeps the offline-first design honest.
 
 **Check it's really offline:** turn Wi-Fi off and reload the app. In DevTools → Network, the filter `-domain:localhost` should stay empty.
 
@@ -151,8 +153,8 @@ What *is* verified, on synthetic signals:
 | Camera heart-rate check-in with re-scan | Multi-user accounts, sync and encryption at rest |
 | DONKI radiation panel with offline cache | Spaceflight-specific resting-vitals thresholds |
 | Cabin environment log and body map | Reminders and a multi-crew view |
-| Offline operation, plus a public read-only demo | |
-| 3D orbit hero, vitals field and space-weather scene | A 3D body map |
+| Offline operation, plus a public interactive demo | |
+| 3D orbit hero, vitals field, space-weather scene and 3D body map | |
 
 Known limits:
 

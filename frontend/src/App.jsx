@@ -60,7 +60,10 @@ export default function App() {
       </nav>
       {DEMO && (
         <p className="demo-banner" role="note">
-          Demo · simulated crew data (crew-1 to crew-4) and cached NASA DONKI events · read-only, nothing is saved
+          Demo · simulated crew data (crew-1 to crew-4) and cached NASA DONKI events · what you log stays in this browser only
+          <button className="banner-btn" onClick={() => { try { localStorage.removeItem('crewpulse-demo-v1') } catch { /* blocked */ } location.reload() }}>
+            Reset demo
+          </button>
         </p>
       )}
       <main key={page}>

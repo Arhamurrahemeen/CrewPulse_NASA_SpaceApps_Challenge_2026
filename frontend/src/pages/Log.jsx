@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api, INDICATORS } from '../api.js'
+import { api, DEMO, INDICATORS } from '../api.js'
 
 // Form rows in display order. step: 1 for whole-number indicators, else decimals.
 const ROWS = [['heart_rate'], ['bp_systolic', 'bp_diastolic'], ['glucose_fasting'], ['body_temp'], ['spo2'], ['sleep_hours'], ['hrv_rmssd']]
@@ -37,7 +37,7 @@ function Scale({ id, from, to, hint, value, onChange }) {
 }
 
 export default function Log() {
-  const [crew, setCrew] = useState('c1')
+  const [crew, setCrew] = useState(DEMO ? 'crew-1' : 'c1')
   const [values, setValues] = useState({})
   const [hrFromOximeter, setHrFromOximeter] = useState(false)
   const [msg, setMsg] = useState(null)

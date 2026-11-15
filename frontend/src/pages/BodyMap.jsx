@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { api, DEMO } from '../api.js'
 import SimulatedBadge from '../components/SimulatedBadge.jsx'
+import Safe3D from '../components/Safe3D.jsx'
+
+const Body3D = lazy(() => import('../components/Body3D.jsx'))
 
 // Original figure built from basic shapes (viewBox 240 x 440). Keys match BODY_PARTS in backend/main.py.
 // Left/right are the crew member's own sides: on the front view their right is on the viewer's left.
@@ -73,6 +76,7 @@ function Figure({ view, selected, onSelect, byPart }) {
 export default function BodyMap() {
   const [crew, setCrew] = useState(DEMO ? 'crew-1' : 'c1')
   const [view, setView] = useState('front')
+  const [mode, setMode] = useState('3d')
   const [selected, setSelected] = useState(null)
   const [severity, setSeverity] = useState(null)
   const [note, setNote] = useState('')
@@ -125,14 +129,38 @@ export default function BodyMap() {
 
       <div className="bodymap-layout">
         <div>
-          <div className="toggle-group" role="group" aria-label="Figure side">
-            {['front', 'back'].map((v) => (
-              <button key={v} aria-pressed={view === v} onClick={() => setView(v)}>
-                {v === 'front' ? 'Front' : 'Back'}
-              </button>
-            ))}
+          <div className="body-controls">
+            <div className="toggle-group" role="group" aria-label="Figure side">
+              {['front', 'back'].map((v) => (
+                <button key={v} aria-pressed={view === v} onClick={() => setView(v)}>
+                  {v === 'front' ? 'Front' : 'Back'}
+                </button>
+              ))}
+            </div>
+            <div className="toggle-group" role="group" aria-label="Figure style">
+              <button aria-pressed={mode === '3d'} onClick={() => setMode('3d')}>3D</button>
+              <button aria-pressed={mode === 'flat'} onClick={() => setMode('flat')}>Flat</button>
+            </div>
           </div>
-          <Figure view={view} selected={selected} onSelect={select} byPart={byPart} />
+          {mode === '3d' ? (
+            <div className="body3d crop">
+              <Safe3D fallback={<Figure view={view} selected={selected} onSelect={select} byPart={byPart} />}>
+                <Suspense fallback={null}>
+                  <Body3D view={view} byPart={byPart} selected={selected} onSelect={select} labels={LABELS} />
+                </Suspense>
+              </Safe3D>
+              <span className="body3d-hint mono">Drag to turn · click a region</span>
+            </div>
+          ) : (
+            <Figure view={view} selected={selected} onSelect={select} byPart={byPart} />
+          )}
+          <label className="field region-pick">
+            <span>Or choose a region</span>
+            <select value={selected ?? ''} onChange={(e) => e.target.value && select(e.target.value)}>
+              <option value="">Select…</option>
+              {Object.entries(LABELS).map(([k, v]) => <option key={k} value={k}>{v}{byPart[k] ? ` (${byPart[k].length} recent)` : ''}</option>)}
+            </select>
+          </label>
         </div>
 
         <div>

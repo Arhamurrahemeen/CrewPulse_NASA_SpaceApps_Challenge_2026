@@ -66,7 +66,8 @@ backend/
 frontend/src/
   pages/ Dashboard, CheckIn, Log, Radiation, Environment, BodyMap
   components/ StatusCard, TrendChart, GuidancePanel, SourceLink, SimulatedBadge, ui (StatusMark, CountUp, Section),
-              OrbitScene (3D hero), VitalsField (3D σ field) + fieldData, SpaceWeather3D (Radiation), Safe3D
+              OrbitScene (3D hero), VitalsField (3D σ field) + fieldData, SpaceWeather3D (Radiation), Body3D (3D body map), Safe3D
+frontend/src/demo.js   demo mode: reads public/demo.json; writes go to the visitor's localStorage only (ports of rules/engine evaluate/bands)
 DESIGN.md              design system: colour (60/30/10, WCAG), type, motion, 3D scenes; art direction by Abdul Awwal
 tools/validate.py      camera vs oximeter pairs → MAE, bias, Bland–Altman PNG
 ```
