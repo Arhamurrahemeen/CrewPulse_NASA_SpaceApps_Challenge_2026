@@ -31,8 +31,41 @@ def analyze(rgb, fps):
         pulse = extract_pulse_signal(rgb, method="pos", fs=fps)
         sos = design_bandpass(LOW, HIGH, fs=fps)
         bpm, quality_db = compute_bpm_and_confidence(apply_filter(pulse, sos), fs=fps)
-    accepted = bpm > 0 and quality_db >= CONFIDENCE_DB_THRESHOLD and fps >= MIN_FPS
-    return {"bpm": bpm, "quality_db": quality_db, "fps_measured": round(fps, 1), "accepted": accepted}
+    accepted = bool(bpm > 0 and quality_db >= CONFIDENCE_DB_THRESHOLD and fps >= MIN_FPS)
+    # plain Python types so FastAPI can serialise the result
+    return {"bpm": float(bpm), "quality_db": float(quality_db), "fps_measured": round(float(fps), 1), "accepted": accepted}
+
+
+MAX_GAP_S = 0.5  # longer than this without a face frame = the trace is broken, ask for a re-scan
+
+
+def analyze_trace(rgb, t_ms):
+    """Browser check-in: forehead RGB means + frame timestamps (ms) -> same result as analyze().
+
+    Browser frames arrive unevenly, and analyze() assumes even sampling, so the trace is resampled onto a uniform
+    grid at the measured rate (face frames / span) before POS. Video never leaves the browser; only these
+    numbers do. Raises ValueError on a malformed trace.
+    """
+    rgb = np.asarray(rgb, dtype=float)
+    t = np.asarray(t_ms, dtype=float) / 1000
+    if rgb.ndim != 2 or rgb.shape[1] != 3 or t.ndim != 1 or len(t) != len(rgb) or len(t) < 2:
+        raise ValueError("trace needs matching rgb [[r,g,b], ...] and t_ms lists")
+    if not np.all(np.isfinite(rgb)) or not np.all(np.isfinite(t)):
+        raise ValueError("trace contains non-numeric values")
+    order = np.argsort(t)
+    t, rgb = t[order] - t[order][0], rgb[order]
+    span = t[-1]
+    fps = (len(t) - 1) / span if span > 0 else 0.0
+    if fps <= 0:
+        return {"bpm": 0, "quality_db": 0.0, "fps_measured": 0.0, "accepted": False}
+    grid = np.arange(int(span * fps) + 1) / fps
+    even = np.column_stack([np.interp(grid, t, rgb[:, c]) for c in range(3)])
+    out = analyze(even, fps)
+    max_gap = float(np.max(np.diff(t)))
+    if max_gap > MAX_GAP_S:
+        out["accepted"] = False
+    out["max_gap_s"] = round(max_gap, 2)
+    return out
 
 
 PREVIEW_WINDOW = "CrewPulse check-in"

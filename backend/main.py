@@ -6,7 +6,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -101,6 +101,48 @@ def list_readings(crew_id: str, indicator: str | None = None, limit: int = 100):
     return [dict(r) for r in rows]
 
 
+def store_camera(crew_id, result):
+    ts = now()
+    conn = db.connect()
+    with conn:
+        conn.execute(
+            "INSERT INTO reading (crew_id, ts, indicator, value, unit, source, quality) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (crew_id, ts, "heart_rate", result["bpm"], "bpm", "camera", result["quality_db"]),
+        )
+    conn.close()
+    return ts
+
+
+RESCAN = "Signal too weak. Please re-scan: stay still, face the light."
+
+
+class TraceIn(BaseModel):
+    crew_id: str = Field(min_length=1)
+    rgb: list[list[float]] = Field(min_length=2, max_length=5000)
+    t_ms: list[float] = Field(min_length=2, max_length=5000)
+
+
+@app.post("/checkin/trace")
+def checkin_trace(body: TraceIn):
+    """In-browser check-in: the page sends only forehead RGB means + timestamps (no video). Same DSP and gate as /checkin."""
+    try:
+        result = rppg_checkin.analyze_trace(body.rgb, body.t_ms)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    if not result["accepted"]:
+        lost = result.get("max_gap_s", 0) > rppg_checkin.MAX_GAP_S
+        return {**result, "bpm": None, "message": "Your face was lost during the scan. Please re-scan and keep your face in the frame." if lost else RESCAN}
+    return {**result, "ts": store_camera(body.crew_id, result)}
+
+
+@app.get("/rppg/model", include_in_schema=False)
+def face_model():
+    """MediaPipe face model for the in-browser check-in, served locally so the scan works offline."""
+    if not rppg_checkin.MODEL_PATH.exists():
+        raise HTTPException(503, "face model missing: download it into backend/rppg/models/ (see README)")
+    return FileResponse(rppg_checkin.MODEL_PATH, media_type="application/octet-stream")
+
+
 @app.post("/checkin")
 def checkin(crew_id: str):
     """Blocking 30 s webcam scan. Only an accepted scan is stored and returns a bpm."""
@@ -111,16 +153,8 @@ def checkin(crew_id: str):
     except RuntimeError as e:  # no camera / no face model
         raise HTTPException(503, str(e))
     if not result["accepted"]:
-        return {**result, "bpm": None, "message": "Signal too weak. Please re-scan: stay still, face the light."}
-    ts = now()
-    conn = db.connect()
-    with conn:
-        conn.execute(
-            "INSERT INTO reading (crew_id, ts, indicator, value, unit, source, quality) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (crew_id, ts, "heart_rate", result["bpm"], "bpm", "camera", result["quality_db"]),
-        )
-    conn.close()
-    return {**result, "ts": ts}
+        return {**result, "bpm": None, "message": RESCAN}
+    return {**result, "ts": store_camera(crew_id, result)}
 
 
 class OximeterPair(BaseModel):

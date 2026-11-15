@@ -95,3 +95,45 @@ def test_oximeter_pair(tmp_path, monkeypatch):
 
     cam, oxi = validate.load(tmp_path / "t.db", "c1")
     assert validate.pair(cam, oxi, window_s=0) == [(scan["bpm"], 73.0, scan["quality_db"])]  # exact, dt = 0
+
+
+# ---------- in-browser check-in: RGB trace + timestamps ----------
+def browser_trace(bpm=72, fps=29.0, seconds=30, jitter_ms=6, seed=1, drop=None):
+    """Frames at an uneven browser rate; the pulse is sampled at the real (jittered) times."""
+    rng = np.random.default_rng(seed)
+    t = np.cumsum(np.full(int(fps * seconds), 1000 / fps) + rng.normal(0, jitter_ms, int(fps * seconds)))
+    t -= t[0]
+    s = t / 1000
+    beat = 0.5 * np.sin(2 * np.pi * bpm / 60 * s)
+    rgb = np.array([150.0, 110.0, 90.0]) + 2 * np.sin(2 * np.pi * 0.05 * s)[:, None] + beat[:, None] * np.array([0.33, 0.77, 0.53])
+    rgb += rng.normal(0, 0.3, rgb.shape)
+    if drop:  # remove frames in [a, b) ms, as if the face was lost
+        keep = (t < drop[0]) | (t >= drop[1])
+        t, rgb = t[keep], rgb[keep]
+    return rgb.tolist(), t.tolist()
+
+
+def test_trace_jittered_29fps():
+    from rppg.checkin import analyze_trace
+    r = analyze_trace(*browser_trace(72, fps=29.0))
+    assert abs(r["bpm"] - 72) <= 3 and r["accepted"] and 28 <= r["fps_measured"] <= 30
+
+
+def test_trace_face_lost_rejected():
+    from rppg.checkin import analyze_trace
+    r = analyze_trace(*browser_trace(72, drop=(10000, 11500)))
+    assert not r["accepted"] and r["max_gap_s"] > 1
+
+
+def test_trace_route_stores_and_validates(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "t.db")
+    c = TestClient(main.app)
+    rgb, t = browser_trace(66, fps=30.0)
+    r = c.post("/checkin/trace", json={"crew_id": "c9", "rgb": rgb, "t_ms": t}).json()
+    assert r["accepted"] and abs(r["bpm"] - 66) <= 3 and r["ts"]
+    stored = c.get("/readings", params={"crew_id": "c9"}).json()
+    assert stored[0]["source"] == "camera" and stored[0]["quality"] == r["quality_db"]
+    lost = c.post("/checkin/trace", json={"crew_id": "c9", "rgb": browser_trace(drop=(5000, 7000))[0], "t_ms": browser_trace(drop=(5000, 7000))[1]}).json()
+    assert lost["bpm"] is None and "face was lost" in lost["message"]
+    assert c.post("/checkin/trace", json={"crew_id": "c9", "rgb": [[1, 2]] * 5, "t_ms": [0, 1, 2, 3, 4]}).status_code == 422
+    assert c.post("/checkin/trace", json={"crew_id": "c9", "rgb": [[1, 2, 3]] * 5, "t_ms": [0, 1, 2]}).status_code == 422

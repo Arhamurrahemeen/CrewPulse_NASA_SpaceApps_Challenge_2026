@@ -30,7 +30,7 @@ So astronauts need to **check their own health, notice what has changed for them
 <p align="center"><img src="docs/assets/divider-02-what.svg" width="100%" alt="Section 02: what it does"/></p>
 
 - **Logs what matters:** heart rate, blood pressure, fasting glucose, body temperature, SpO₂, sleep, mood (1–5), stress (0–10), and HRV typed in from a chest-strap ECG.
-- **Camera check-in.** A 30-second webcam scan estimates **heart rate only** (rPPG, POS method). A weak signal gets a re-scan request, never a number. HRV and stress never come from the camera.
+- **Camera check-in, in the page.** A 30-second scan in the browser estimates **heart rate only** (rPPG, POS method). Face landmarks and forehead averaging run in the page; only three colour numbers per frame go to the local backend, never video. A weak signal or a lost face gets a re-scan request, never a number. HRV and stress never come from the camera.
 - **Colour only when cited.** Green, amber and red come from published guidelines (AHA, ADA, CDC, NASA-STD-3001), with the source linked on every card. No source means no colour.
 - **Unusual for you.** It flags a reading outside your own 28-day mean ± 2 SD **on two days in a row**, so one odd reading doesn't raise an alarm.
 - **Radiation.** Solar flares, CMEs, storms and SEP events from NASA DONKI, cached for offline use, plus a mission dose clearly labelled **ESTIMATE**.
@@ -98,7 +98,7 @@ npm install
 npm run dev
 ```
 
-Start the backend from your own terminal. The camera preview window only appears in a desktop session.
+The check-in runs the camera inside the page (allow camera access when the browser asks). The face model is served by the local backend, so download it first (above). The old desktop OpenCV window is still available as a fallback link; it only appears when the backend runs in your own terminal.
 
 **Before going offline**, cache space weather and load the simulated crew:
 

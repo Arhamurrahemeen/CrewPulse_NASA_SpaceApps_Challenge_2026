@@ -55,7 +55,7 @@ Known issue: in one informal test the old green-channel build read 15–25 BPM l
 backend/
   main.py              FastAPI app, CORS for localhost:5173
   db.py                SQLite schema + helpers
-  rppg/                reused VitalSense modules + checkin.py (30 s scan → bpm, quality_db)
+  rppg/                reused VitalSense modules + checkin.py (30 s scan → bpm, quality_db; analyze_trace resamples browser traces)
   rules/thresholds.json  indicator ranges, each with source
   rules/engine.py      status (green/amber/red) + guidance text + escalation flag
   baseline/engine.py   rolling mean/SD, z-score, 7-day slope
@@ -79,7 +79,7 @@ tools/validate.py      camera vs oximeter pairs → MAE, bias, Bland–Altman PN
 - `radiation_event(id, ts, type, details_json, source)` — source = donki
 
 ## API (keep it small)
-- `POST/GET /readings` · `POST /checkin` (camera) · `GET /status/{crew_id}` (latest per indicator + colour + guidance + baseline alert)
+- `POST/GET /readings` · `POST /checkin/trace` (in-browser camera: forehead RGB means + timestamps, no video) · `POST /checkin` (desktop OpenCV window, fallback) · `GET /rppg/model` (face model for the browser) · `GET /status/{crew_id}` (latest per indicator + colour + guidance + baseline alert)
 - `GET /trends/{crew_id}?indicator=&days=` · `POST/GET /environment` · `POST/GET /symptoms`
 - `GET /radiation` (cached DONKI + estimated cumulative dose, labelled as estimate)
 

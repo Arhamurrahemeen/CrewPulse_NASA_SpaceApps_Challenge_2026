@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { api, DEMO, INDICATORS } from '../api.js'
 
 const [HR_MIN, HR_MAX] = INDICATORS.heart_rate.limits
+// Not bundled into the demo build: it needs the local backend for the face model and the analysis.
+const BrowserScan = import.meta.env.VITE_DEMO_MODE === 'true' ? null : lazy(() => import('../components/BrowserScan.jsx'))
 
 // Oximeter HR read when the scan ends, saved with the scan's timestamp -> exact pair for tools/validate.py.
 function OximeterPair({ crew, cameraTs }) {
@@ -66,9 +68,28 @@ function Scanner({ state }) {
 export default function CheckIn() {
   const [crew, setCrew] = useState(DEMO ? 'crew-1' : 'c1')
   const [state, setState] = useState('idle') // idle | scanning | done | error
+  const [mode, setMode] = useState(null) // 'browser' (camera in this page) | 'window' (desktop OpenCV window)
   const [result, setResult] = useState(null)
 
+  // Download and compile the face tracker while the user reads the page, so Start only waits for the camera.
+  useEffect(() => {
+    if (import.meta.env.VITE_DEMO_MODE !== 'true') import('../components/BrowserScan.jsx').then((m) => m.warmUp())
+  }, [])
+
+  function startBrowser() {
+    setResult(null)
+    setMode('browser')
+    setState('scanning')
+  }
+
+  function browserDone(r) {
+    if (r === null) return // unmounted
+    setResult(r)
+    setState(r.error ? 'error' : 'done')
+  }
+
   async function scan() {
+    setMode('window')
     setState('scanning')
     setResult(null)
     try {
@@ -84,9 +105,15 @@ export default function CheckIn() {
     <section>
       <div className="kicker"><b>02 · Camera check-in</b><span>rPPG · POS method</span><span>heart rate only</span></div>
       <h1>A 30-second pulse reading from your face.</h1>
-      <p className="lede">The camera opens in its own window and scans for 30 s. A weak signal means a re-scan, never a number. Press q in that window to cancel.</p>
+      <p className="lede">Your camera opens right here and scans for 30 s. Only three colour numbers per frame leave this page, and only to your own local backend: never video. A weak signal means a re-scan, never a number.</p>
       <div className="checkin-layout">
-      <Scanner state={state} />
+      {state === 'scanning' && mode === 'browser' && BrowserScan ? (
+        <Suspense fallback={<Scanner state="scanning" />}>
+          <BrowserScan crew={crew} onDone={browserDone} />
+        </Suspense>
+      ) : (
+        <Scanner state={state} />
+      )}
       <div className="checkin">
       {DEMO && (
         <div className="card warn">
@@ -97,9 +124,18 @@ export default function CheckIn() {
       <label>
         Crew ID <input value={crew} onChange={(e) => setCrew(e.target.value)} disabled={DEMO || state === 'scanning'} />
       </label>
-      <button onClick={scan} disabled={DEMO || state === 'scanning' || !crew}>
-        {state === 'scanning' ? 'Scanning… keep still (~45 s)' : 'Start check-in'}
-      </button>
+      {state === 'scanning' && mode === 'browser' ? (
+        <button type="button" onClick={() => { setState('idle'); setMode(null) }}>Cancel scan</button>
+      ) : (
+        <button type="button" className="btn-primary" onClick={startBrowser} disabled={DEMO || state === 'scanning' || !crew}>
+          {state === 'scanning' ? 'Scanning in the camera window… (~45 s)' : 'Start check-in'}
+        </button>
+      )}
+      {!DEMO && state !== 'scanning' && (
+        <button type="button" className="link-btn" onClick={scan} disabled={!crew}>
+          Or use the desktop camera window (press q there to cancel)
+        </button>
+      )}
 
       {state === 'done' && result.accepted && (
         <div className="card">
@@ -118,12 +154,21 @@ export default function CheckIn() {
       )}
       {state === 'error' && <div className="card warn">Check-in failed: {result.error}</div>}
       <div className="card">
-        <div className="mono muted">Before you scan</div>
-        <ol className="checklist">
-          <li>Even light from the front, nothing bright behind you.</li>
-          <li>Sit still, rest your elbows, keep your head steady for the full scan.</li>
-          <li>Wearing a fingertip oximeter? Type its heart rate under the result: those pairs measure how accurate the camera is.</li>
-        </ol>
+        <div className="mono muted">Set up for the best reading</div>
+        <ul className="guide">
+          <li><b>Light</b> Face a window or lamp so the light falls evenly on your face. Nothing bright behind you, no flickering light, no direct glare.</li>
+          <li><b>Distance</b> About an arm's length, roughly 40–60 cm, with your whole face in the frame.</li>
+          <li><b>Forehead</b> Keep it visible: move hair, caps and headbands out of the box.</li>
+          <li><b>Stay still</b> Sit down, rest your elbows, don't talk, and keep your head steady for the full 30 s. Breathe normally.</li>
+          <li><b>Camera</b> At eye level, lens clean. Close other apps that use the camera.</li>
+          <li><b>Oximeter</b> Wearing one? Type its heart rate under the result: those pairs measure how accurate the camera is.</li>
+        </ul>
+        <div className="mono muted">Forehead box colour = distance (estimated from face size)</div>
+        <div className="legend-row">
+          <span className="mark green">Good distance</span>
+          <span className="mark amber">Adjust a little</span>
+          <span className="mark red">Too close or too far</span>
+        </div>
         <div className="mono muted">Note on method</div>
         <p className="serif" style={{ margin: '0.3rem 0 0' }}>
           Remote photoplethysmography reads tiny colour changes in the skin. Accuracy drops with motion, low light and
